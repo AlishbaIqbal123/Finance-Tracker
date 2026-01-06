@@ -136,6 +136,25 @@ The application features a modern, responsive design with multiple theme options
 ## Screenshots
 
 *[Note: Screenshots will be added here showing the application in both light and dark themes. The application features a beautiful pastel color scheme that provides excellent contrast and visual appeal in both themes.]*
+<img width="1911" height="925" alt="image" src="https://github.com/user-attachments/assets/2fbdc0bf-1878-4607-9ee7-d44e408a8614" />
+<img width="1919" height="928" alt="image" src="https://github.com/user-attachments/assets/8377ccf3-08f9-40d8-aa53-7d85c46b2cb3" />
+<img width="1919" height="932" alt="image" src="https://github.com/user-attachments/assets/7c80d35f-4a6f-4aed-9247-38ea947bb31d" />
+<img width="1919" height="926" alt="image" src="https://github.com/user-attachments/assets/a95b6998-74d2-47f9-9291-63ccfb7aba01" />
+<img width="1919" height="906" alt="image" src="https://github.com/user-attachments/assets/1f308e2c-a0bd-4fc7-8903-5651f2a44f60" />
+<img width="1919" height="929" alt="image" src="https://github.com/user-attachments/assets/3fe45934-78ad-46be-a1a8-10233c7251fb" />
+<img width="1919" height="928" alt="image" src="https://github.com/user-attachments/assets/31740e7e-69fb-4ff1-b867-a623ed8b593e" />
+<img width="1893" height="906" alt="image" src="https://github.com/user-attachments/assets/52503d7a-456a-47a8-bab4-7fc8ad87c019" />
+<img width="1919" height="930" alt="image" src="https://github.com/user-attachments/assets/299a10b3-5a56-4f44-9202-b2a481730f3b" />
+<img width="1907" height="863" alt="image" src="https://github.com/user-attachments/assets/ab019dc7-3942-4c74-b95d-2482c7b4fa65" />
+<img width="1919" height="933" alt="image" src="https://github.com/user-attachments/assets/99cc7225-577b-417c-813a-ce0a599e72e0" />
+<img width="1919" height="935" alt="image" src="https://github.com/user-attachments/assets/74e12391-425a-4d30-b7ae-0481de39f351" />
+<img width="1919" height="932" alt="image" src="https://github.com/user-attachments/assets/2ffd90ce-452d-48a5-b4bd-e07df360e73a" />
+
+
+
+
+
+
 
 ### Light Theme
 - Clean, bright interface with pastel accent colors
