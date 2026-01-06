@@ -1,134 +1,305 @@
-# 💰 FinanceTracker: Premium Personal Finance & Budgeting Suite
+# Finance Tracker
 
-[![Laravel 11](https://img.shields.io/badge/Framework-Laravel_11.x-FF2D20?style=for-the-badge&logo=laravel)](https://laravel.com)
-[![Bootstrap 5](https://img.shields.io/badge/UI_Framework-Bootstrap_5.3-7952B3?style=for-the-badge&logo=bootstrap)](https://getbootstrap.com)
-[![Vanilla JS](https://img.shields.io/badge/Logic-Vanilla_JavaScript-F7DF1E?style=for-the-badge&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+A comprehensive personal finance management application built with Laravel that helps users track income, expenses, create budgets, and visualize their financial data with beautiful analytics.
 
----
+## Table of Contents
+- [Overview](#overview)
+- [Features](#features)
+- [Technology Stack](#technology-stack)
+- [Installation](#installation)
+- [Screenshots](#screenshots)
+- [Usage](#usage)
+- [API Endpoints](#api-endpoints)
+- [Theme Functionality](#theme-functionality)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
 
-## 📖 1. Introduction
-**FinanceTracker** is a high-performance, aesthetically driven personal finance management system. Designed to transform how users interact with their money, this application combines the robustness of a **Laravel 11** backend with the instantaneous speed of a **Vanilla JavaScript** frontend engine.
+## Overview
 
-The core philosophy of FinanceTracker is **"Financial Clarity through Interactive Design."** It doesn't just list numbers; it tells a story of your spending habits using modern data visualization, progress tracking, and a premium "Glassmorphism" interface. Whether you're tracking daily expenses or planning long-term budgets, FinanceTracker provides a professional-grade toolset for both desktop and mobile users.
+Finance Tracker is a web-based personal finance management system designed to help individuals track their income and expenses, create and manage budgets, and gain insights into their spending patterns. The application provides an intuitive dashboard with real-time financial summaries, detailed transaction management, comprehensive budget tracking, and interactive analytics.
 
----
+The application features a modern, responsive design with multiple theme options and supports multiple currencies with PKR as the default. Built with Laravel and Bootstrap, it offers a seamless user experience across all devices.
 
-## 🎯 2. Scope of the Project
-The scope of this project is to provide a unified, secure, and highly interactive environment for personal wealth management. It is designed to handle:
+## Features
 
-*   **Multi-Dimensional Transaction Logging**: Capturing income and expenses with precise categorization and timestamps.
-*   **Time-Travel Financial Navigation**: A unique state-management system that allows users to jump to any month in the past or future to view historical summaries and set forward-looking budgets.
-*   **Categorical Spending Control**: A proactive budgeting engine that monitors transactions in real-time and alerts users as they approach their financial limits.
-*   **Visual Intelligence & Analytics**: Converting rows of data into high-contrast legends, charts, and progress rings for immediate cognitive understanding of financial health.
-*   **Aesthetic Personalization**: Giving users complete ownership of their workspace visuality through a multi-theme engine.
+### Dashboard Overview
+- Real-time financial summaries with total income, expenses, and balance
+- Quick action buttons for adding income and expenses
+- Visual spending charts and budget progress indicators
+- Recent transactions overview
 
----
+### Transaction Management
+- **Add Transactions**: Create income and expense records with title, amount, category, description, and date
+- **Edit Transactions**: Update existing transaction details
+- **Delete Transactions**: Remove transactions with confirmation
+- **Filter & Search**: Filter transactions by type, category, month, and amount range
+- **Categorization**: Predefined categories for income and expenses
 
-## ✅ 3. Functional Requirements
+### Budget Tracking
+- Create monthly budgets for different spending categories
+- Track budget progress with visual indicators
+- View remaining budget amounts
+- Manage budget allocations
 
-### A. Core Engine (Backend & Data)
-1.  **Secure Authentication**: A complete User Auth system (Login/Register/Logout) using Laravel Breeze/Sanctum architecture.
-2.  **Hybrid Data Persistence**: 
-    *   **Cloud (Laravel/MySQL)**: Handling user profiles and critical account settings.
-    *   **Client (LocalStorage/JavaScript)**: Utilizing **Email-Keyed Storage** for sub-millisecond data retrieval and offline-first transaction logging.
+### Analytics & Reporting
+- Visual charts showing spending by category
+- Expense and income trends
+- Budget vs. actual spending comparisons
+- Monthly financial summaries
 
-### B. User Modules
-1.  **Interactive Dashboard**:
-    *   Real-time balance calculations.
-    *   Monthly context filtering (switching the entire dashboard's data based on a selected month/year).
-    *   Quick-action modals for adding income/expenses.
-2.  **Transaction Ledger**:
-    *   Full CRUD (Create, Read, Update, Delete) capability.
-    *   Smart-search and category-based filtering.
-3.  **Proactive Budgeting**:
-    *   Establish monthly limits per category.
-    *   **Automatic Sync**: Instant calculation of "Spent" vs. "Budget" amounts.
-    *   **Budget History**: A summarized retrospective view of all previous monthly performances.
-4.  **Advanced Analytics**:
-    *   Categorical breakdowns (Food, Bills, Shopping, etc.).
-    *   Proportional spending charts with dynamic legends.
-5.  **Multi-Theme Customization**:
-    *   7+ Premium hand-crafted themes.
-    *   Global currency support (PKR, USD, EUR, GBP, etc.).
+### Theme Switching
+- Multiple theme options including light, dark, and pastel themes
+- 7 different color schemes: Light, Dark, Rose, Ocean, Forest, Sunset, Lavender
+- Consistent theme application across all pages
+- Persistent theme preferences
 
----
+### Currency Support
+- Multi-currency support with PKR as default
+- Easy currency switching capability
+- Proper currency formatting throughout the application
 
-## 🔍 4. Deep Dive: Proper Explanation of Each Part
+## Technology Stack
 
-### 🛡️ I. The Hybrid Architecture
-FinanceTracker uses a hybrid "Server-Side Rendered" (SSR) and "Single Page Interaction" approach.
-*   **Laravel** serves the initial blade templates and handles security.
-*   **JavaScript** takes over the moment the page loads. It uses a master `updateAll()` function that acts as a "Single Source of Truth." When you add a transaction, the JS updates the LocalStorage and immediately triggers a cascade of UI updates across charts, cards, and tables without a page refresh.
+- **Backend Framework**: [Laravel](https://laravel.com) (PHP)
+- **Frontend Framework**: [Bootstrap 5](https://getbootstrap.com)
+- **Database**: [MySQL](https://mysql.com)
+- **Frontend Libraries**: JavaScript (ES6), Bootstrap Icons
+- **Development Tools**: Composer, NPM, Artisan
+- **Styling**: Custom CSS with pastel color schemes
 
-### 📅 II. Time-State Management (The Global View)
-The most unique technical part of this project is the **Global View State**.
-*   The application maintains `window.budgetViewMonth` and `window.budgetViewYear`.
-*   All data on the dashboard, budget page, and analytics page is **filtered through these variables**.
-*   **Logic Example**: If you select "December 2025" on the dashboard, the transaction engine only pulls records starting with `2025-12`, and the budget engine only pulls limits set for that month. This allows for a "Time-Travel" like experience.
-
-### 📈 III. The Smart Budgeting Engine
-The budgeting system is not just a table; it's a data-processor.
-1.  **Categorization**: It groups transactions by category name (case-insensitive).
-2.  **Intersection**: It finds the intersection where a transaction's category matches a budget's category.
-3.  **Real-time Math**: It performs a reduce operation on the transaction array to calculate spent values vs. set targets on every single keystroke.
-
-### 🎨 IV. Premium Design System (CSS-Driven)
-The UI is built on a custom **CSS Variables API**.
-*   Themes are managed in `theme.js` which maps semantic colors (e.g., `--primary-hover`) to theme tokens.
-*   **Glassmorphism**: We utilize `backdrop-filter: blur()` and semi-transparent alpha channels to create a high-end, modern look that feels like a native macOS or Windows 11 application.
-
----
-
-## 📸 5. Project Screenshots & Visual Flow
-
-| Dashboard View | Budgeting System |
-| :--- | :--- |
-| ![Dashboard](https://via.placeholder.com/800x450/319795/FFFFFF?text=FinanceTracker+Dashboard+Control+Center) | ![Budgets](https://via.placeholder.com/800x450/d53f8c/FFFFFF?text=Visual+Monthly+Budgeting) |
-| **Explanation**: Shows the primary summary cards, trend analytics, and the new monthly navigation dropdowns. | **Explanation**: Displays real-time progress bars and the categorical breakdown against user limits. |
-
-| Analytics Insights | Theme Customization |
-| :--- | :--- |
-| ![Analytics](https://via.placeholder.com/800x450/3182ce/FFFFFF?text=Data+Driven+Analytics) | ![Themes](https://via.placeholder.com/800x450/dd6b20/FFFFFF?text=7+Premium+UI+Skins) |
-| **Explanation**: A deep dive into categorical spending distributions with professional color-coded legends. | **Explanation**: Demonstrates the instant theme-switching capability from Light to sleek Dark modes. |
-
----
-
-## 🚀 6. Setup & Developer Documentation
+## Installation
 
 ### Prerequisites
-*   **PHP 8.2+** & **MySQL**
-*   **Composer** (PHP Package Manager)
-*   **Node.js & NPM** (Vite & Asset Compilation)
+- PHP 8.2 or higher
+- MySQL 5.7 or higher
+- Composer
+- Node.js & NPM
 
-### Installation Steps
-1.  **Clone Repository**:
-    ```bash
-    git clone https://github.com/AlishbaIqbal123/Finance-Tracker-basiclevel-
-    cd Finance-Tracker-basiclevel-
-    ```
-2.  **Install dependencies**:
-    ```bash
-    composer install
-    npm install
-    ```
-3.  **Setup Environment**:
-    *   Create a copy of `.env.example` as `.env`.
-    *   Run `php artisan key:generate`.
-    *   Configure your `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD`.
-4.  **Migrate & Build**:
-    ```bash
-    php artisan migrate
-    npm run build
-    ```
-5.  **Run Server**:
-    ```bash
-    php artisan serve
-    ```
+### Setup Instructions
+
+1. **Clone the repository** (if applicable):
+   ```bash
+   git clone https://github.com/AlishbaIqbal123/Finance-Tracker.git
+   cd Finance-Tracker
+   ```
+
+2. **Install PHP dependencies**:
+   ```bash
+   composer install
+   ```
+
+3. **Install Node.js dependencies**:
+   ```bash
+   npm install
+   ```
+
+4. **Create environment file**:
+   ```bash
+   cp .env.example .env
+   ```
+
+5. **Generate application key**:
+   ```bash
+   php artisan key:generate
+   ```
+
+6. **Configure database**:
+   - Update `.env` file with your database credentials:
+     ```
+     DB_CONNECTION=mysql
+     DB_HOST=127.0.0.1
+     DB_PORT=3306
+     DB_DATABASE=finance_tracker
+     DB_USERNAME=your_username
+     DB_PASSWORD=your_password
+     ```
+
+7. **Run database migrations**:
+   ```bash
+   php artisan migrate
+   ```
+
+8. **Seed the database** (optional - for sample data):
+   ```bash
+   php artisan db:seed
+   ```
+
+9. **Start the development server**:
+   ```bash
+   php artisan serve
+   ```
+
+10. **Access the application**:
+    - Open your browser and go to `http://localhost:8000`
+
+## Screenshots
+
+*[Note: Screenshots will be added here showing the application in both light and dark themes. The application features a beautiful pastel color scheme that provides excellent contrast and visual appeal in both themes.]*
+
+### Light Theme
+- Clean, bright interface with pastel accent colors
+- Soft background tones for comfortable viewing
+- High contrast text for readability
+
+### Dark Theme
+- Elegant dark interface with pastel highlights
+- Reduced eye strain for nighttime usage
+- Consistent color scheme with the light theme
+
+## Usage
+
+### Getting Started
+1. Visit the application in your browser
+2. Use the demo account or create your own
+3. Start by adding your first transaction
+
+### Adding Transactions
+1. Click "Add Transaction" or "Add Income/Expense" button
+2. Fill in the transaction details:
+   - Title: Descriptive name for the transaction
+   - Amount: Numerical value
+   - Type: Income or Expense
+   - Category: Select from predefined categories
+   - Date: Transaction date
+   - Description: Optional additional details
+3. Click "Add Transaction" to save
+
+### Managing Budgets
+1. Navigate to the Budget section
+2. Click "Set Budget" or "Add Budget"
+3. Select category and set amount
+4. Monitor progress in the dashboard
+
+### Viewing Analytics
+1. Go to the Analytics page
+2. View spending charts and financial summaries
+3. Filter data by date ranges as needed
+
+### Changing Themes
+1. Use the theme selector in the sidebar
+2. Choose from 7 available themes
+3. Theme preference is saved automatically
+
+### Currency Management
+1. Use the currency selector in the header
+2. Select your preferred currency
+3. All amounts will be formatted accordingly
+
+## API Endpoints
+
+The application provides RESTful API endpoints for data management:
+
+### Transactions API
+- `GET /api/transactions` - Get all transactions
+- `POST /api/transactions` - Create a new transaction
+- `GET /api/transactions/{id}` - Get a specific transaction
+- `PUT /api/transactions/{id}` - Update a transaction
+- `DELETE /api/transactions/{id}` - Delete a transaction
+- `GET /api/transactions/filter` - Filter transactions
+
+### Authentication
+- All API endpoints require authentication
+- Uses Laravel Sanctum for API authentication
+
+## Theme Functionality
+
+Finance Tracker features a comprehensive theme system with 7 distinct color schemes:
+
+### Theme Options
+1. **Light Theme**: Clean, bright interface with soft pastel accents
+2. **Dark Theme**: Elegant dark interface with reduced eye strain
+3. **Rose Theme**: Soft pink and rose-inspired colors
+4. **Ocean Theme**: Calming blue and teal tones
+5. **Forest Theme**: Earthy green and brown palette
+6. **Sunset Theme**: Warm orange and red gradients
+7. **Lavender Theme**: Purple and lavender pastel shades
+
+### Visual Differences
+- **Light Theme**: Features light backgrounds with pastel accent colors, dark text for high readability
+- **Dark Theme**: Uses deep backgrounds with lighter text, maintaining pastel accent colors for consistency
+- **Color Consistency**: All themes maintain the same pastel color scheme approach with appropriate contrast ratios
+- **UI Elements**: All buttons, cards, and interactive elements adapt to the selected theme
+
+### Theme Persistence
+- Theme preferences are saved in browser's localStorage
+- Consistent theme application across all pages
+- Automatic theme restoration on subsequent visits
+
+### Pastel Color Scheme
+- All themes use soft, pleasant pastel colors
+- Careful attention to accessibility and contrast ratios
+- Harmonious color combinations that are easy on the eyes
+- Consistent branding across all themes
+
+## Troubleshooting
+
+### Common Issues
+
+**Database Connection Issues**
+- Ensure MySQL server is running
+- Verify database credentials in `.env` file
+- Check that the database exists and is accessible
+
+**Migration Errors**
+- Run `php artisan config:clear` to clear configuration cache
+- Verify database permissions
+- Ensure the database server is accessible
+
+**Asset Loading Issues**
+- Run `npm run dev` or `npm run build` to compile assets
+- Clear browser cache if CSS/JS changes aren't visible
+- Run `php artisan storage:link` if using file uploads
+
+**API Authentication Issues**
+- Ensure you're logged in before accessing API endpoints
+- Check that the API tokens are properly configured
+
+### Development Server Not Starting
+- Verify PHP and required extensions are installed
+- Check for port conflicts (default is 8000)
+- Ensure no other services are using the same port
+
+### Theme Not Applying
+- Check browser's localStorage for theme settings
+- Clear browser cache and reload
+- Verify JavaScript files are loading properly
+
+## Contributing
+
+We welcome contributions to improve Finance Tracker! Here's how you can contribute:
+
+### Development Setup
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Commit your changes (`git commit -m 'Add some amazing feature'`)
+5. Push to the branch (`git push origin feature/amazing-feature`)
+6. Open a Pull Request
+
+### Code Standards
+- Follow Laravel coding standards
+- Use meaningful variable and function names
+- Write clear, concise comments
+- Ensure all tests pass before submitting
+
+### Reporting Issues
+- Use the issue tracker to report bugs
+- Provide detailed steps to reproduce
+- Include screenshots if applicable
+- Suggest possible solutions if known
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+
+- Built with the Laravel framework
+- Uses Bootstrap 5 for responsive design
+- Features custom pastel color schemes for enhanced user experience
+- Includes various open-source libraries for enhanced functionality
 
 ---
 
-## 🤝 7. Final Word
-FinanceTracker is more than a budgeting tool; it is a demonstration of how **modern web technologies** can make data management both powerful and beautiful. Every line of code was written with the user's convenience in mind, ensuring a fast, private, and visually stunning experience.
-
-**Created with ❤️ by Alishba Iqbal**
-[GitHub](https://github.com/AlishbaIqbal123) | [Repository](https://github.com/AlishbaIqbal123/Finance-Tracker-basiclevel-)
+*Finance Tracker - Take Control of Your Financial Life*
