@@ -1,10 +1,114 @@
-// FinanceTracker - Simple JavaScript Implementation
-
-// Data storage - using user-specific localStorage to persist data permanently across browser sessions
+// Data storage
 let transactions = [];
 let budgets = [];
 
-// Expose to window for analytics.js
+// Script Version: 1.13 (Updated at 2026-01-04 20:30:00)
+console.log('FinanceTracker Script v1.13 initialized');
+
+// --- Global Budget Navigation Logic (Moved up for availability) ---
+window.budgetViewMonth = (function () {
+    const val = localStorage.getItem('ft_budgetViewMonth');
+    return (val !== null && !isNaN(parseInt(val))) ? parseInt(val) : new Date().getMonth();
+})();
+
+window.budgetViewYear = (function () {
+    const val = localStorage.getItem('ft_budgetViewYear');
+    return (val !== null && !isNaN(parseInt(val))) ? parseInt(val) : new Date().getFullYear();
+})();
+
+window.setBudgetView = function (month, year) {
+    const oldM = window.budgetViewMonth;
+    const oldY = window.budgetViewYear;
+
+    window.budgetViewMonth = parseInt(month);
+    window.budgetViewYear = parseInt(year);
+
+    console.log('Setting Budget View -> Year:', window.budgetViewYear, 'Month:', window.budgetViewMonth);
+
+    // Persist to storage
+    localStorage.setItem('ft_budgetViewMonth', window.budgetViewMonth);
+    localStorage.setItem('ft_budgetViewYear', window.budgetViewYear);
+
+    // Refresh everything
+    if (typeof updateAll === 'function') updateAll();
+
+    // Scroll to top if values actually changed
+    if (oldM !== window.budgetViewMonth || oldY !== window.budgetViewYear) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Safety check for specific UI refreshes
+    if (typeof updateBudgetPage === 'function') try { updateBudgetPage(); } catch (e) { }
+    if (typeof updateBudgetOverview === 'function') try { updateBudgetOverview(); } catch (e) { }
+};
+
+window.changeBudgetMonth = function (delta, e) {
+    if (e && e.preventDefault) e.preventDefault();
+
+    let m = parseInt(window.budgetViewMonth);
+    let y = parseInt(window.budgetViewYear);
+
+    m += delta;
+    if (m < 0) { m = 11; y -= 1; }
+    else if (m > 11) { m = 0; y += 1; }
+
+    window.setBudgetView(m, y);
+};
+// --- End Navigation Logic ---
+
+// Sample Data Definitions (Moved to global scope for reliable initialization)
+const sampleTransactions2026 = [
+    // Jan 2026
+    { id: 10001, type: 'income', amount: 5500, category: 'Salary', title: 'Monthly Salary', description: 'Jan Salary', date: '2026-01-01' },
+    { id: 10017, type: 'income', amount: 800, category: 'Freelance', title: 'Web Project', description: 'Website design', date: '2026-01-20' },
+    { id: 10003, type: 'expense', amount: 1500, category: 'Bills', title: 'Rent', description: 'Monthly rent', date: '2026-01-01' },
+    { id: 10004, type: 'expense', amount: 450, category: 'Food', title: 'Groceries', description: 'Weekly groceries', date: '2026-01-05' },
+    { id: 10005, type: 'expense', amount: 200, category: 'Entertainment', title: 'Movie Night', description: 'Netflix & Chill', date: '2026-01-15' },
+    { id: 10016, type: 'expense', amount: 150, category: 'Healthcare', title: 'Checkup', description: 'Annual checkup', date: '2026-01-10' },
+    { id: 10018, type: 'expense', amount: 45, category: 'Transportation', title: 'Uber', description: 'Ride to meeting', date: '2026-01-08' },
+
+    // Feb 2026
+    { id: 10006, type: 'income', amount: 5500, category: 'Salary', title: 'Salary Feb', description: 'Feb Salary', date: '2026-02-01' },
+    { id: 10020, type: 'income', amount: 300, category: 'Freelance', title: 'Logo Design', description: 'Small project', date: '2026-02-22' },
+    { id: 10007, type: 'expense', amount: 300, category: 'Transportation', title: 'Fuel', description: 'Gas refill', date: '2026-02-05' },
+    { id: 10008, type: 'expense', amount: 120, category: 'Food', title: 'Dinner', description: 'Restaurant', date: '2026-02-12' },
+    { id: 10012, type: 'expense', amount: 250, category: 'Shopping', title: 'New Shoes', description: 'Nike sale', date: '2026-02-18' },
+    { id: 10013, type: 'expense', amount: 1500, category: 'Bills', title: 'Rent Feb', description: 'Monthly rent', date: '2026-02-01' },
+    { id: 10019, type: 'expense', amount: 60, category: 'Healthcare', title: 'Meds', description: 'Pharmacy', date: '2026-02-15' },
+
+    // March 2026
+    { id: 10014, type: 'income', amount: 5500, category: 'Salary', title: 'Salary March', description: 'March Salary', date: '2026-03-01' },
+    { id: 10015, type: 'expense', amount: 400, category: 'Food', title: 'Party Food', description: 'Birthday prep', date: '2026-03-05' },
+
+    // Dec 2025
+    { id: 10009, type: 'income', amount: 5000, category: 'Salary', title: 'Dec Salary', description: 'Bonus included', date: '2025-12-01' },
+    { id: 10010, type: 'expense', amount: 1500, category: 'Bills', title: 'Rent Dec', description: 'Dec rent', date: '2025-12-01' },
+    { id: 10011, type: 'expense', amount: 600, category: 'Shopping', title: 'Gifts', description: 'Holiday shopping', date: '2025-12-20' }
+];
+
+const sampleBudgets2026 = [
+    // Dec 2025 Budgets
+    { id: 20001, category: 'Food', amount: 600, month: 11, year: 2025, period: 'monthly', createdAt: '2025-12-01' },
+    { id: 20005, category: 'Bills', amount: 1600, month: 11, year: 2025, period: 'monthly', createdAt: '2025-12-01' },
+
+    // Jan 2026 Budgets
+    { id: 20006, category: 'Food', amount: 500, month: 0, year: 2026, period: 'monthly', createdAt: '2026-01-01' },
+    { id: 20007, category: 'Bills', amount: 1500, month: 0, year: 2026, period: 'monthly', createdAt: '2026-01-01' },
+    { id: 20008, category: 'Entertainment', amount: 300, month: 0, year: 2026, period: 'monthly', createdAt: '2026-01-01' },
+    { id: 20009, category: 'Transportation', amount: 200, month: 0, year: 2026, period: 'monthly', createdAt: '2026-01-01' },
+    { id: 20014, category: 'Healthcare', amount: 500, month: 0, year: 2026, period: 'monthly', createdAt: '2026-01-01' },
+
+    // Feb 2026 Budgets
+    { id: 20010, category: 'Food', amount: 550, month: 1, year: 2026, period: 'monthly', createdAt: '2026-02-01' },
+    { id: 20011, category: 'Bills', amount: 1500, month: 1, year: 2026, period: 'monthly', createdAt: '2026-02-01' },
+    { id: 20012, category: 'Shopping', amount: 400, month: 1, year: 2026, period: 'monthly', createdAt: '2026-02-01' },
+    { id: 20013, category: 'Transportation', amount: 350, month: 1, year: 2026, period: 'monthly', createdAt: '2026-02-01' },
+    { id: 20015, category: 'Healthcare', amount: 200, month: 1, year: 2026, period: 'monthly', createdAt: '2026-02-01' },
+    { id: 20016, category: 'Entertainment', amount: 400, month: 1, year: 2026, period: 'monthly', createdAt: '2026-02-01' }
+];
+
+
+// Expose to window
 window.transactions = transactions;
 window.budgets = budgets;
 
@@ -30,14 +134,48 @@ function loadFileData() {
     const transactionKey = getStorageKey('transactions');
     const budgetKey = getStorageKey('budgets');
 
-    const savedTransactions = localStorage.getItem(transactionKey);
-    const savedBudgets = localStorage.getItem(budgetKey);
+    // Check if we are a guest (no profile found)
+    const isGuest = !localStorage.getItem('financeTracker_profile');
 
+    let savedTransactions = localStorage.getItem(transactionKey);
+    let savedBudgets = localStorage.getItem(budgetKey);
+
+    // CRITICAL: If Guest AND (No Data OR Old Data Version), Force Load Sample Data
+    const demoVersion = '1.12';
+    const savedVersion = localStorage.getItem('ft_demo_version');
+
+    // Force inject for generic guest OR specifically logged-in demo user
+    const userProfile = localStorage.getItem('financeTracker_profile');
+    let isDemoAccount = false;
+    if (userProfile) {
+        try {
+            if (JSON.parse(userProfile).email === 'demo@financetracker.com') isDemoAccount = true;
+        } catch (e) { }
+    }
+
+    const shouldInject = isGuest || isDemoAccount;
+
+    if (shouldInject && (!savedTransactions || savedTransactions === '[]' || savedVersion !== demoVersion)) {
+        console.log('Guest user: Injecting updated sample data (v' + demoVersion + ')');
+        transactions = [...sampleTransactions2026];
+        budgets = [...sampleBudgets2026];
+
+        // Save immediately to fix the persistent storage state
+        localStorage.setItem(transactionKey, JSON.stringify(transactions));
+        localStorage.setItem(budgetKey, JSON.stringify(budgets));
+        localStorage.setItem('ft_demo_version', demoVersion);
+
+        window.transactions = transactions;
+        window.budgets = budgets;
+        updateAll(); // Force UI update immediately
+        return; // Initialization complete
+    }
+
+    // Normal Load Logic
     if (savedTransactions) {
         try {
             transactions = JSON.parse(savedTransactions);
             window.transactions = transactions;
-            console.log('Loaded user transactions:', transactions.length);
         } catch (e) {
             transactions = [];
             window.transactions = [];
@@ -51,7 +189,6 @@ function loadFileData() {
         try {
             budgets = JSON.parse(savedBudgets);
             window.budgets = budgets;
-            console.log('Loaded user budgets:', budgets.length);
         } catch (e) {
             budgets = [];
             window.budgets = [];
@@ -63,13 +200,26 @@ function loadFileData() {
 }
 
 // Save data to localStorage
-function saveToFile() {
+function saveData() {
     try {
+        // Sync local variables with window variables in case they were updated by other scripts
+        if (window.transactions && window.transactions !== transactions) transactions = window.transactions;
+        if (window.budgets && window.budgets !== budgets) budgets = window.budgets;
+
         const transactionKey = getStorageKey('transactions');
         const budgetKey = getStorageKey('budgets');
 
         localStorage.setItem(transactionKey, JSON.stringify(transactions));
         localStorage.setItem(budgetKey, JSON.stringify(budgets));
+
+        // Ensure globals are also updated (redundant but safe)
+        window.transactions = transactions;
+        window.budgets = budgets;
+
+        // Notify analytics page if available
+        if (typeof window.notifyAnalyticsUpdate === 'function') {
+            try { window.notifyAnalyticsUpdate(); } catch (e) { }
+        }
     } catch (e) {
         console.error('Error saving to storage:', e);
     }
@@ -77,14 +227,15 @@ function saveToFile() {
 
 // Compatibility mappings for old function names
 window.loadFromSession = loadFileData;
-window.saveToSession = saveToFile;
-window.saveData = saveToFile;
+window.saveToSession = saveData;
+window.saveData = saveData;
+window.refreshData = loadFileData; // Explicit refresh
+
+// Load data immediately so it's ready for other scripts that run on DOMContentLoaded
+loadFileData();
 
 // Start app
 document.addEventListener('DOMContentLoaded', function () {
-    // Load data from storage first
-    loadFileData();
-
     // Sync sidebar and header profile name
     const savedProfile = localStorage.getItem('financeTracker_profile');
     let isDemoUser = false;
@@ -105,13 +256,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Only auto-populate sample data for the SPECIFIC demo account
-    // Real users should start with a clean slate (empty dashboard)
-    if (transactions.length === 0 && isDemoUser) {
-        console.log('Demo user: Loading sample data');
-        addInitialSampleData();
-        saveToFile();
-    }
+    // Data loading is now handled strictly by loadFileData called above.
+    // It enforces versioning and guest checks to ensure data is present.
+    // We do NOT need to double-check here, as it may cause race conditions.
 
     console.log('App started with', transactions.length, 'transactions');
     updateAll();
@@ -224,128 +371,16 @@ function updateTransactionCategories(type) {
     transCat.innerHTML = cats.map(cat => `<option value="${cat}">${cat}</option>`).join('');
 }
 
+// Helper function to check for guest access
+// (Implementation moved to the end of the file)
+
 // Add initial sample data for new users
 function addInitialSampleData() {
-    const now = new Date();
-    const currentMonth = now.toISOString().slice(0, 7);
-
-    const sampleTransactions = [
-        // Income transactions
-        {
-            id: Date.now() + 1,
-            type: 'income',
-            amount: 5000,
-            category: 'Salary',
-            title: 'Monthly Salary',
-            description: 'Software Developer Salary',
-            date: `${currentMonth}-01`
-        },
-        {
-            id: Date.now() + 2,
-            type: 'income',
-            amount: 1500,
-            category: 'Freelance',
-            title: 'Web Development Project',
-            description: 'Client project payment',
-            date: `${currentMonth}-15`
-        },
-
-        // Expense transactions
-        {
-            id: Date.now() + 3,
-            type: 'expense',
-            amount: 1200,
-            category: 'Bills',
-            title: 'Rent Payment',
-            description: 'Monthly apartment rent',
-            date: `${currentMonth}-01`
-        },
-        {
-            id: Date.now() + 4,
-            type: 'expense',
-            amount: 300,
-            category: 'Food',
-            title: 'Grocery Shopping',
-            description: 'Weekly groceries',
-            date: `${currentMonth}-05`
-        },
-        {
-            id: Date.now() + 5,
-            type: 'expense',
-            amount: 150,
-            category: 'Transportation',
-            title: 'Gas & Car Maintenance',
-            description: 'Fuel and car service',
-            date: `${currentMonth}-08`
-        },
-        {
-            id: Date.now() + 6,
-            type: 'expense',
-            amount: 200,
-            category: 'Shopping',
-            title: 'Clothing',
-            description: 'Winter clothes shopping',
-            date: `${currentMonth}-12`
-        },
-        {
-            id: Date.now() + 7,
-            type: 'expense',
-            amount: 80,
-            category: 'Bills',
-            title: 'Internet & Phone',
-            description: 'Monthly utilities',
-            date: `${currentMonth}-03`
-        },
-        {
-            id: Date.now() + 8,
-            type: 'expense',
-            amount: 120,
-            category: 'Entertainment',
-            title: 'Movies & Dining',
-            description: 'Weekend entertainment',
-            date: `${currentMonth}-18`
-        }
-    ];
-
-    const sampleBudgets = [
-        {
-            id: Date.now() + 10,
-            category: 'Food',
-            amount: 600,
-            period: 'monthly',
-            spent: 0,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: Date.now() + 11,
-            category: 'Transportation',
-            amount: 300,
-            period: 'monthly',
-            spent: 0,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: Date.now() + 12,
-            category: 'Entertainment',
-            amount: 200,
-            period: 'monthly',
-            spent: 0,
-            createdAt: new Date().toISOString()
-        },
-        {
-            id: Date.now() + 13,
-            category: 'Shopping',
-            amount: 400,
-            period: 'monthly',
-            spent: 0,
-            createdAt: new Date().toISOString()
-        }
-    ];
-
-    transactions = sampleTransactions;
-    budgets = sampleBudgets;
-
-    console.log('Sample data loaded:', transactions.length, 'transactions');
+    // This function is now a fallback wrapper, as data is defined globally
+    window.transactions = [...sampleTransactions2026];
+    window.budgets = [...sampleBudgets2026];
+    saveData();
+    console.log('Demo data loaded for 2026 via addInitialSampleData');
 }
 
 // Add sample data for demonstration (keep existing function)
@@ -422,21 +457,9 @@ function addSampleData() {
 
     transactions = sampleTransactions;
     budgets = sampleBudgets;
-
-    console.log('Additional sample data loaded');
+    saveData();
+    console.log('Sample data loaded via addSampleData');
 }
-
-// Save data function
-function saveData() {
-    // Save to localStorage for persistence
-    saveToFile();
-
-    // Notify analytics page of data changes
-    if (typeof window.notifyAnalyticsUpdate === 'function') {
-        window.notifyAnalyticsUpdate();
-    }
-}
-
 // Utility functions
 // Currency configuration
 const CURRENCY_CONFIG = {
@@ -462,7 +485,7 @@ function formatMoney(amount) {
             currency: config.currency
         }).format(amount);
     } catch (e) {
-        return `${config.symbol}${amount.toFixed(2)}`;
+        return `${config.symbol}${amount.toFixed(2)} `;
     }
 }
 
@@ -599,193 +622,218 @@ function hideModal(modalOrId) {
 // Add new income (dashboard)
 function addIncome(e) {
     if (e) e.preventDefault();
+    console.log('addIncome triggered');
 
-    // Check if elements exist
-    const titleEl = document.getElementById('incomeTitle');
-    const amountEl = document.getElementById('incomeAmount');
-    const categoryEl = document.getElementById('incomeCategory');
-    const descriptionEl = document.getElementById('incomeDescription');
-
-    if (!titleEl || !amountEl || !categoryEl) {
-        console.error('Income form elements not found');
-        alert('Form not ready. Please try again.');
+    if (checkGuestAccess()) {
+        console.warn('addIncome: Access blocked by checkGuestAccess');
         return;
     }
 
-    const title = titleEl.value;
-    const amount = parseFloat(amountEl.value);
-    const category = categoryEl.value;
-    const description = descriptionEl ? descriptionEl.value : title;
-    const date = new Date().toISOString().slice(0, 10);
+    try {
+        // Check if elements exist
+        const titleEl = document.getElementById('incomeTitle');
+        const amountEl = document.getElementById('incomeAmount');
+        const categoryEl = document.getElementById('incomeCategory');
+        const descriptionEl = document.getElementById('incomeDescription');
 
-    // Validation
-    if (!title || title.trim() === '') {
-        alert('Please enter a title');
-        return;
+        if (!titleEl || !amountEl || !categoryEl) {
+            console.error('Income form elements not found', { titleEl, amountEl, categoryEl });
+            alert('Form elements missing. Please refresh the page.');
+            return;
+        }
+
+        const title = titleEl.value;
+        const amount = parseFloat(amountEl.value);
+        const category = categoryEl.value;
+        const description = descriptionEl ? descriptionEl.value : title;
+
+        // Auto-date from input
+        const dateEl = document.getElementById('incomeDate');
+        const date = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().slice(0, 10);
+
+        console.log('Processing Income:', { title, amount, category, date });
+
+        // Validation
+        if (!title || title.trim() === '') {
+            alert('Please enter a title');
+            return;
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+
+        const transaction = {
+            id: Date.now(),
+            title: title.trim(),
+            amount: amount,
+            type: 'income',
+            category: category,
+            date: date,
+            description: description.trim() || title.trim()
+        };
+
+        transactions.unshift(transaction);
+        saveData();
+        updateAll();
+        hideModal('addIncomeModal');
+
+        // Reset form safely
+        const form = document.getElementById('incomeForm');
+        if (form) form.reset();
+
+        showToast('Income added successfully!', 'success');
+        console.log('Income added and UI updated');
+    } catch (err) {
+        console.error('Critical error in addIncome:', err);
+        alert('An error occurred while saving. Check console for details.');
     }
-
-    if (!amount || amount <= 0) {
-        alert('Please enter a valid amount');
-        return;
-    }
-
-    if (!category) {
-        alert('Please select a category');
-        return;
-    }
-
-    const transaction = {
-        id: Date.now(),
-        title: title.trim(),
-        amount: amount,
-        type: 'income',
-        category: category,
-        date: date,
-        description: description.trim() || title.trim()
-    };
-
-    transactions.unshift(transaction);
-    saveData();
-    updateAll();
-    hideModal('addIncomeModal');
-
-    // Reset form safely
-    const form = document.getElementById('incomeForm');
-    if (form) form.reset();
-
-    console.log('Income added:', transaction);
 }
 
 // Add new expense (dashboard)
 function addExpense(e) {
     if (e) e.preventDefault();
+    console.log('addExpense triggered');
 
-    // Check if elements exist
-    const titleEl = document.getElementById('expenseTitle');
-    const amountEl = document.getElementById('expenseAmount');
-    const categoryEl = document.getElementById('expenseCategory');
-    const descriptionEl = document.getElementById('expenseDescription');
-
-    if (!titleEl || !amountEl || !categoryEl) {
-        console.error('Expense form elements not found');
-        alert('Form not ready. Please try again.');
+    if (checkGuestAccess()) {
+        console.warn('addExpense: Access blocked by checkGuestAccess');
         return;
     }
 
-    const title = titleEl.value;
-    const amount = parseFloat(amountEl.value);
-    const category = categoryEl.value;
-    const description = descriptionEl ? descriptionEl.value : title;
-    const date = new Date().toISOString().slice(0, 10);
+    try {
+        // Check if elements exist
+        const titleEl = document.getElementById('expenseTitle');
+        const amountEl = document.getElementById('expenseAmount');
+        const categoryEl = document.getElementById('expenseCategory');
+        const descriptionEl = document.getElementById('expenseDescription');
 
-    // Validation
-    if (!title || title.trim() === '') {
-        alert('Please enter a title');
-        return;
+        if (!titleEl || !amountEl || !categoryEl) {
+            console.error('Expense form elements not found', { titleEl, amountEl, categoryEl });
+            alert('Form elements missing. Please refresh the page.');
+            return;
+        }
+
+        const title = titleEl.value;
+        const amount = parseFloat(amountEl.value);
+        const category = categoryEl.value;
+        const description = descriptionEl ? descriptionEl.value : title;
+
+        // Auto-date from input
+        const dateEl = document.getElementById('expenseDate');
+        const date = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().slice(0, 10);
+
+        console.log('Processing Expense:', { title, amount, category, date });
+
+        // Validation
+        if (!title || title.trim() === '') {
+            alert('Please enter a title');
+            return;
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+
+        const transaction = {
+            id: Date.now(),
+            title: title.trim(),
+            amount: amount,
+            type: 'expense',
+            category: category,
+            date: date,
+            description: description.trim() || title.trim()
+        };
+
+        transactions.unshift(transaction);
+        saveData();
+        updateAll();
+        hideModal('addExpenseModal');
+
+        // Reset form safely
+        const form = document.getElementById('expenseForm');
+        if (form) form.reset();
+
+        showToast('Expense added successfully!', 'success');
+        console.log('Expense added and UI updated');
+    } catch (err) {
+        console.error('Critical error in addExpense:', err);
+        alert('An error occurred while saving. Check console for details.');
     }
-
-    if (!amount || amount <= 0) {
-        alert('Please enter a valid amount');
-        return;
-    }
-
-    if (!category) {
-        alert('Please select a category');
-        return;
-    }
-
-    const transaction = {
-        id: Date.now(),
-        title: title.trim(),
-        amount: amount,
-        type: 'expense',
-        category: category,
-        date: date,
-        description: description.trim() || title.trim()
-    };
-
-    transactions.unshift(transaction);
-    saveData();
-    updateAll();
-    hideModal('addExpenseModal');
-
-    // Reset form safely
-    const form = document.getElementById('expenseForm');
-    if (form) form.reset();
-
-    console.log('Expense added:', transaction);
 }
 
 // Add new transaction (other pages)
 function addTransaction(e) {
     if (e) e.preventDefault();
+    console.log('addTransaction triggered');
 
-    console.log('addTransaction called');
+    if (checkGuestAccess()) return;
 
-    const titleEl = document.getElementById('transactionTitle');
-    const amountEl = document.getElementById('transactionAmount');
-    const typeEl = document.getElementById('transactionType');
-    const categoryEl = document.getElementById('transactionCategory');
-    const descriptionEl = document.getElementById('transactionDescription');
+    try {
+        const titleEl = document.getElementById('transactionTitle');
+        const amountEl = document.getElementById('transactionAmount');
+        const typeEl = document.getElementById('transactionType');
+        const categoryEl = document.getElementById('transactionCategory');
+        const descriptionEl = document.getElementById('transactionDescription');
 
-    console.log('Form elements:', { titleEl, amountEl, typeEl, categoryEl, descriptionEl });
+        if (!titleEl || !amountEl || !typeEl || !categoryEl) {
+            console.error('Form elements not found', { titleEl, amountEl, typeEl, categoryEl });
+            alert('Form elements missing. Please refresh the page.');
+            return;
+        }
 
-    if (!titleEl || !amountEl || !typeEl || !categoryEl) {
-        console.error('Form elements not found');
-        alert('Form not ready. Please try again.');
-        return;
+        const title = titleEl.value;
+        const amount = parseFloat(amountEl.value);
+        const type = typeEl.value;
+        const category = categoryEl.value;
+        const description = descriptionEl ? descriptionEl.value : '';
+
+        // Validation
+        if (!title || title.trim() === '') {
+            alert('Please enter a title');
+            return;
+        }
+
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid amount');
+            return;
+        }
+
+        if (!type || !category) {
+            alert('Please select both type and category');
+            return;
+        }
+
+        const dateEl = document.getElementById('transactionDate');
+        const date = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().slice(0, 10);
+
+        console.log('Processing Transaction:', { title, amount, type, category, date });
+
+        const transaction = {
+            id: Date.now(),
+            title: title.trim(),
+            description: description.trim() || title.trim(),
+            amount: amount,
+            type: type,
+            category: category,
+            date: date
+        };
+
+        transactions.unshift(transaction);
+        saveData();
+        updateAll();
+        hideModal('addTransactionModal');
+
+        const form = document.getElementById('transactionForm');
+        if (form) form.reset();
+
+        showToast('Transaction added successfully!', 'success');
+        console.log('Transaction added and UI updated');
+    } catch (err) {
+        console.error('Critical error in addTransaction:', err);
+        alert('An error occurred while saving. Check console for details.');
     }
-
-    const title = titleEl.value;
-    const amount = parseFloat(amountEl.value);
-    const type = typeEl.value;
-    const category = categoryEl.value;
-    const description = descriptionEl ? descriptionEl.value : '';
-
-    console.log('Form values:', { title, amount, type, category, description });
-
-    if (!title || title.trim() === '') {
-        alert('Please enter a title');
-        return;
-    }
-
-    if (!amount || amount <= 0) {
-        alert('Please enter a valid amount');
-        return;
-    }
-
-    if (!type) {
-        alert('Please select a type');
-        return;
-    }
-
-    if (!category) {
-        alert('Please select a category');
-        return;
-    }
-
-    const transaction = {
-        id: Date.now(),
-        title: title.trim(),
-        description: description.trim() || title.trim(),
-        amount: amount,
-        type: type,
-        category: category,
-        date: new Date().toISOString().slice(0, 10)
-    };
-
-    console.log('Adding transaction:', transaction);
-
-    transactions.unshift(transaction);
-    saveData();
-    updateAll();
-    hideModal('addTransactionModal');
-
-    // Reset form safely
-    const form = document.getElementById('transactionForm');
-    if (form) form.reset();
-
-    showToast('Transaction added successfully!', 'success');
 }
 
 // Add new budget
@@ -801,10 +849,20 @@ function addBudget(e) {
         return;
     }
 
-    // Check if budget for this category already exists
-    const existingBudget = budgets.find(b => b.category === category);
+    // Check if budget for this category already exists for THIS month
+    const viewMonth = parseInt(window.budgetViewMonth);
+    const viewYear = parseInt(window.budgetViewYear);
+
+    const existingBudget = budgets.find(b => {
+        const matchesCategory = b.category === category;
+        const matchesMonth = (b.month === viewMonth && b.year === viewYear);
+        // Fallback for older data that only has createdAt
+        const matchesOld = b.createdAt && new Date(b.createdAt).getMonth() === viewMonth && new Date(b.createdAt).getFullYear() === viewYear;
+        return matchesCategory && (matchesMonth || matchesOld);
+    });
+
     if (existingBudget) {
-        alert('Budget for this category already exists. Delete the existing one first.');
+        alert(`Budget for ${category} already exists for this month.`);
         return;
     }
 
@@ -814,6 +872,8 @@ function addBudget(e) {
         amount: amount,
         period: period,
         spent: 0,
+        month: viewMonth,
+        year: viewYear,
         createdAt: new Date().toISOString()
     };
 
@@ -821,17 +881,14 @@ function addBudget(e) {
     saveData();
     updateAll();
     hideModal('addBudgetModal');
-    document.getElementById('budgetForm').reset();
+    if (document.getElementById('budgetForm')) document.getElementById('budgetForm').reset();
     showToast('Budget added successfully!', 'success');
 }
 
 // Delete transaction
 function deleteTransaction(id) {
+    if (checkGuestAccess()) return;
     if (confirm('Delete this transaction?')) {
-        console.log('Deleting transaction with ID:', id, 'Type:', typeof id);
-        console.log('Current transactions:', transactions.map(t => ({ id: t.id, type: typeof t.id })));
-
-        // Convert id to both string and number to handle type mismatches
         const stringId = String(id);
         const numberId = Number(id);
 
@@ -841,10 +898,8 @@ function deleteTransaction(id) {
         if (transactions.length < initialLength) {
             saveData();
             updateAll();
-            console.log('Transaction deleted successfully');
             showToast('Transaction deleted!', 'success');
         } else {
-            console.error('Transaction not found for deletion. ID:', id);
             alert('Error: Transaction not found!');
         }
     }
@@ -860,50 +915,114 @@ function deleteBudget(id) {
     }
 }
 
-// Update all displays
+// Dashboard Budget Overview Month Nav UI
 function updateAll() {
-    console.log('updateAll called');
-    updateSummary();
-    updateTransactionsList();
-    updateBudgetsList();
-    updateExpenseChart();
-    updateBudgetOverview();
-    updateAnalyticsPage();
-    updateBudgetPage();
+    console.log('updateAll triggered');
+    try {
+        updateSummary();
+    } catch (e) { console.warn('updateSummary failed:', e); }
 
-    // Notify analytics page of data changes
+    try {
+        updateTransactionsList();
+    } catch (e) { console.warn('updateTransactionsList failed:', e); }
+
+    try {
+        updateBudgetOverview();
+    } catch (e) { console.warn('updateBudgetOverview failed:', e); }
+
+    try {
+        updateBudgetsList();
+    } catch (e) { console.warn('updateBudgetsList failed:', e); }
+
+    try {
+        updateExpenseChart();
+    } catch (e) { console.warn('updateExpenseChart failed:', e); }
+
+    try {
+        updateAnalyticsPage();
+    } catch (e) { console.warn('updateAnalyticsPage failed:', e); }
+
+    try {
+        updateBudgetPage();
+    } catch (e) { console.warn('updateBudgetPage failed:', e); }
+
     if (typeof window.notifyAnalyticsUpdate === 'function') {
-        window.notifyAnalyticsUpdate();
+        try {
+            window.notifyAnalyticsUpdate();
+        } catch (e) { }
     }
 }
 
-// Update summary cards
+// Update summary cards (Balanced between Monthly Stats and Lifetime Balance)
 function updateSummary() {
-    let totalIncome = 0;
-    let totalExpenses = 0;
+    const viewMonth = parseInt(window.budgetViewMonth);
+    const viewYear = parseInt(window.budgetViewYear);
+    const monthStr = String(viewMonth + 1).padStart(2, '0');
+    const yearMonthTag = `${viewYear}-${monthStr}`;
 
+    let monthlyIncome = 0;
+    let monthlyExpenses = 0;
+    let lifetimeBalance = 0;
+
+    // Iterate through ALL transactions to calculate lifetime balance AND monthly stats
     transactions.forEach(t => {
+        const amount = Number(t.amount) || 0;
+
+        // Calculate Lifetime Balance (Total Income - Total Expenses ever)
         if (t.type === 'income') {
-            totalIncome += t.amount;
+            lifetimeBalance += amount;
         } else {
-            totalExpenses += t.amount;
+            lifetimeBalance -= amount;
+        }
+
+        // Calculate Monthly stats for the Income and Expense cards
+        if (t.date && t.date.trim().startsWith(yearMonthTag)) {
+            if (t.type === 'income') {
+                monthlyIncome += amount;
+            } else {
+                monthlyExpenses += amount;
+            }
         }
     });
 
-    const balance = totalIncome - totalExpenses;
-
-    // Update dashboard elements (correct IDs)
+    // Update UI elements
     const totalIncomeEl = document.getElementById('totalIncome');
     const totalExpensesEl = document.getElementById('totalExpenses');
     const currentBalanceEl = document.getElementById('currentBalance');
     const sidebarBalanceEl = document.getElementById('sidebarBalance');
 
-    if (totalIncomeEl) totalIncomeEl.textContent = formatMoney(totalIncome);
-    if (totalExpensesEl) totalExpensesEl.textContent = formatMoney(totalExpenses);
-    if (currentBalanceEl) currentBalanceEl.textContent = formatMoney(balance);
-    if (sidebarBalanceEl) sidebarBalanceEl.textContent = formatMoney(balance);
+    // Update Income/Expenses with monthly filtered data
+    if (totalIncomeEl) totalIncomeEl.textContent = formatMoney(monthlyIncome);
+    if (totalExpensesEl) totalExpensesEl.textContent = formatMoney(monthlyExpenses);
 
-    console.log('Summary updated:', { totalIncome, totalExpenses, balance });
+    // Update BOTH Balance card and Sidebar with the TRUE Lifetime Balance
+    if (currentBalanceEl) currentBalanceEl.textContent = formatMoney(lifetimeBalance);
+    if (sidebarBalanceEl) sidebarBalanceEl.textContent = formatMoney(lifetimeBalance);
+
+    // Update Subtitles to be crystal clear about the data context
+    const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long' });
+
+    // Find subtitles on the Dashboard
+    const dashboardCards = document.querySelectorAll('.summary-card');
+    dashboardCards.forEach(card => {
+        const titleEl = card.querySelector('.card-subtitle');
+        if (!titleEl) return;
+
+        if (card.classList.contains('income')) {
+            titleEl.textContent = `Income in ${monthName}`;
+        } else if (card.classList.contains('expense')) {
+            titleEl.textContent = `Expenses in ${monthName}`;
+        } else if (card.classList.contains('balance')) {
+            titleEl.textContent = `Total Available Balance`;
+        }
+    });
+
+    console.log('Summary updated:', {
+        viewContext: monthName,
+        monthlyIncome,
+        monthlyExpenses,
+        totalBalance: lifetimeBalance
+    });
 }
 
 // Update transactions list
@@ -913,7 +1032,6 @@ function updateTransactionsList() {
 
     if (container) {
         if (transactions.length === 0) {
-            // Show empty state
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="bi bi-receipt text-muted" style="font-size: 3rem;"></i>
@@ -925,8 +1043,9 @@ function updateTransactionsList() {
                 </div>
             `;
         } else {
-            // Show recent transactions (last 5)
-            const recentTransactions = transactions.slice(0, 5);
+            // Sort by date descending
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            const recentTransactions = sortedTransactions.slice(0, 5);
             container.innerHTML = recentTransactions.map(t => `
                 <div class="transaction-item d-flex align-items-center py-2 border-bottom">
                     <div class="transaction-icon me-3">
@@ -945,17 +1064,25 @@ function updateTransactionsList() {
     }
 
     if (tableBody) {
+        // If we have a more advanced renderer (like in transactions.js), don't overwrite it
+        if (typeof renderTransactionsTable === 'function') {
+            console.log('Handing over table render to page-specific script');
+            return;
+        }
+
         if (transactions.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No transactions yet</td></tr>';
         } else {
-            tableBody.innerHTML = transactions.map(t => `
+            // Sort by date descending
+            const sortedTransactions = [...transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+            tableBody.innerHTML = sortedTransactions.map(t => `
                 <tr>
                     <td>${formatDate(t.date)}</td>
                     <td>${t.title}</td>
-                    <td><span class="badge bg-${t.type === 'income' ? 'success' : 'danger'}">${t.type}</span></td>
                     <td>${t.category}</td>
-                    <td class="text-${t.type === 'income' ? 'success' : 'danger'}">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</td>
-                    <td>
+                    <td><span class="badge bg-${t.type === 'income' ? 'success' : 'danger'}">${t.type}</span></td>
+                    <td class="text-end text-${t.type === 'income' ? 'success' : 'danger'}">${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}</td>
+                    <td class="text-end">
                         <button class="btn btn-sm btn-outline-primary me-1" onclick="editTransaction(${t.id})">
                             <i class="bi bi-pencil"></i>
                         </button>
@@ -1035,176 +1162,212 @@ function updateExpenseChart() {
     chartContainer.innerHTML = legendHTML;
 }
 
+// Helper to compute spent for a category in the selected month
+function getSpentForCategory(category, monthlyExpenses) {
+    if (!category) return 0;
+    const targetCategory = category.trim().toLowerCase();
+    return (monthlyExpenses || [])
+        .filter(t => t.category && String(t.category).trim().toLowerCase() === targetCategory)
+        .reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+}
+
+// Global Budget Render Function
+function renderBudgetUI(b, monthlyExpenses, isCard = true) {
+    const spent = getSpentForCategory(b.category, monthlyExpenses);
+    const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0;
+    const isOver = spent > b.amount;
+    const remaining = Math.max(0, b.amount - spent);
+
+    let progressClass = 'bg-success';
+    if (percentage >= 100) progressClass = 'bg-danger';
+    else if (percentage >= 80) progressClass = 'bg-warning';
+
+    if (!isCard) {
+        // Simple progress bar for dashboard
+        return `
+            <div class="mb-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="small fw-medium">${b.category}</span>
+                    <span class="text-muted extra-small">${formatMoney(spent)} / ${formatMoney(b.amount)}</span>
+                </div>
+                <div class="progress" style="height: 6px;">
+                    <div class="progress-bar ${isOver ? 'bg-danger' : 'bg-success'}" 
+                         style="width: ${Math.min(percentage, 100)}%"></div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Full card for budget page
+    const categoryTransactions = (monthlyExpenses || [])
+        .filter(t => t.category && t.category.trim().toLowerCase() === b.category.trim().toLowerCase())
+        .slice(0, 3);
+
+    const transactionsHtml = categoryTransactions.length > 0
+        ? `<div class="mt-3 pt-2 border-top">
+            <div class="x-small text-muted mb-1 uppercase fw-bold">Recent activity</div>
+            ${categoryTransactions.map(t => `
+                <div class="d-flex justify-content-between x-small py-1">
+                    <span class="text-truncate" style="max-width: 120px;">${t.title}</span>
+                    <span class="fw-bold">${formatMoney(t.amount)}</span>
+                </div>
+            `).join('')}
+           </div>`
+        : '';
+
+    return `
+        <div class="card budget-card mb-3 animate-slide-in">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div class="d-flex align-items-center">
+                        <div class="category-icon me-3 bg-primary-soft text-primary">
+                            <i class="bi bi-tag"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0">${b.category}</h5>
+                            <small class="text-muted">${b.period.charAt(0).toUpperCase() + b.period.slice(1)} Budget</small>
+                        </div>
+                    </div>
+                    <div class="dropdown">
+                        <button class="btn btn-link link-dark p-0" data-bs-toggle="dropdown">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="#" onclick="editBudget(${b.id})"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                            <li><a class="dropdown-item text-danger" href="#" onclick="deleteBudget(${b.id})"><i class="bi bi-trash me-2"></i>Delete</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="fw-bold">${formatMoney(spent)} <small class="text-muted fw-normal">of ${formatMoney(b.amount)}</small></span>
+                        <span class="${isOver ? 'text-danger' : 'text-success'} fw-bold">${percentage.toFixed(0)}%</span>
+                    </div>
+                    <div class="progress" style="height: 10px;">
+                        <div class="progress-bar ${progressClass}" role="progressbar" style="width: ${Math.min(percentage, 100)}%"></div>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="text-muted small">
+                        ${isOver ? `<span class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>${formatMoney(spent - b.amount)} over</span>`
+            : `<span>${formatMoney(remaining)} remaining</span>`}
+                    </span>
+                    <span class="badge ${isOver ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'} rounded-pill">
+                        ${isOver ? 'Over Limit' : 'On Track'}
+                    </span>
+                </div>
+                ${transactionsHtml}
+            </div>
+        </div>
+    `;
+}
+
 // Update budget overview on dashboard
 function updateBudgetOverview() {
     const container = document.getElementById('budgetOverview');
     if (!container) return;
 
-    if (budgets.length === 0) {
-        container.innerHTML = `
-            <div class="text-center py-5">
-                <i class="bi bi-piggy-bank text-muted" style="font-size: 2rem;"></i>
-                <p class="text-muted mt-2">No budgets set yet</p>
-                <button class="btn btn-sm btn-primary" onclick="showModal('addBudgetModal')">
-                    <i class="bi bi-plus-circle me-1"></i>Set Budget
-                </button>
-            </div>
-        `;
-        return;
+    const viewMonth = parseInt(window.budgetViewMonth);
+    const viewYear = parseInt(window.budgetViewYear);
+    const monthStr = String(viewMonth + 1).padStart(2, '0');
+    const yearMonthTag = `${viewYear}-${monthStr}`;
+    const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'short', year: 'numeric' });
+
+    // Filter budgets for THIS month only
+    const monthlyBudgets = budgets.filter(b => {
+        if (b.month !== undefined && b.year !== undefined) {
+            return b.month === viewMonth && b.year === viewYear;
+        }
+        if (b.createdAt) {
+            const d = new Date(b.createdAt);
+            return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+        }
+        return false;
+    });
+
+    const monthlyExpenses = transactions.filter(t => t.type === 'expense' && t.date && t.date.trim().startsWith(yearMonthTag));
+
+    // Generate Month Options
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthOptions = months.map((m, i) => `<option value="${i}" ${i === viewMonth ? 'selected' : ''}>${m}</option>`).join('');
+
+    // Generate Year Options
+    const currentYear = new Date().getFullYear();
+    let yearOptions = '';
+    for (let y = currentYear - 2; y <= currentYear + 2; y++) {
+        yearOptions += `<option value="${y}" ${y === viewYear ? 'selected' : ''}>${y}</option>`;
     }
 
-    // Calculate spending per category
-    const categorySpending = {};
-    transactions
-        .filter(t => t.type === 'expense')
-        .forEach(t => {
-            categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
-        });
+    let html = `
+        <div class="d-flex justify-content-between align-items-center mb-3 bg-light-soft p-2 rounded gap-2">
+            <button type="button" class="btn btn-sm btn-link link-dark p-0 nav-arrow" onclick="window.changeBudgetMonth(-1, event)" title="Prev"><i class="bi bi-chevron-left"></i></button>
+            <div class="d-flex gap-1 flex-grow-1">
+                <select class="form-select form-select-sm theme-aware-select border-0 bg-transparent fw-bold p-0 text-center" onchange="window.setBudgetView(this.value, window.budgetViewYear)" style="box-shadow: none; width: auto;">
+                    ${monthOptions}
+                </select>
+                <select class="form-select form-select-sm theme-aware-select border-0 bg-transparent fw-bold p-0 text-center" onchange="window.setBudgetView(window.budgetViewMonth, this.value)" style="box-shadow: none; width: auto;">
+                    ${yearOptions}
+                </select>
+            </div>
+            <button type="button" class="btn btn-sm btn-link link-dark p-0 nav-arrow" onclick="window.changeBudgetMonth(1, event)" title="Next"><i class="bi bi-chevron-right"></i></button>
+        </div>
+    `;
 
-    // Generate budget items
-    const budgetHTML = budgets.slice(0, 4).map(budget => {
-        const spent = categorySpending[budget.category] || 0;
-        const percentage = Math.min((spent / budget.amount) * 100, 100);
-        const isOverBudget = spent > budget.amount;
-
-        return `
-            <div class="mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="fw-medium">${budget.category}</span>
-                    <span class="text-muted">${formatMoney(spent)} / ${formatMoney(budget.amount)}</span>
-                </div>
-                <div class="progress" style="height: 8px;">
-                    <div class="progress-bar ${isOverBudget ? 'bg-danger' : 'bg-success'}" 
-                         style="width: ${percentage}%"></div>
-                </div>
-                <div class="text-end mt-1">
-                    <small class="${isOverBudget ? 'text-danger' : 'text-success'}">
-                        ${percentage.toFixed(0)}%
-                    </small>
-                </div>
+    if (monthlyBudgets.length === 0) {
+        html += `
+            <div class="text-center py-4">
+                <p class="text-muted small mb-2">No budget set for ${monthName}</p>
+                <button class="btn btn-xs btn-outline-primary" onclick="showModal('addBudgetModal')">Set Budget</button>
             </div>
         `;
-    }).join('');
+    } else {
+        html += `
+            <div style="max-height: 400px; overflow-y: auto; overflow-x: hidden; padding-right: 5px;" class="custom-scrollbar">
+                ${monthlyBudgets.map(b => renderBudgetUI(b, monthlyExpenses, false)).join('')}
+            </div>
+        `;
+    }
 
-    container.innerHTML = budgetHTML;
+    container.innerHTML = html;
 }
 
 // Update budgets list
 function updateBudgetsList() {
-    const container = document.getElementById('budgetOverview');
     const mainListContainer = document.getElementById('budgetsList');
-    if (!container && !mainListContainer) return;
+    if (!mainListContainer) return;
 
-    // Filter transactions to CURRENT LOCAL MONTH
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    const viewMonth = parseInt(window.budgetViewMonth);
+    const viewYear = parseInt(window.budgetViewYear);
+    const monthStr = String(viewMonth + 1).padStart(2, '0');
+    const yearMonthTag = `${viewYear}-${monthStr}`;
 
-    const monthlyExpenses = transactions.filter(t => {
-        if (t.type !== 'expense') return false;
-        const tDate = new Date(t.date);
-        return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+    const monthlyExpenses = transactions.filter(t =>
+        t && t.type === 'expense' && t.date && t.date.trim().startsWith(yearMonthTag)
+    );
+
+    const monthlyBudgets = budgets.filter(b => {
+        if (b.month !== undefined && b.year !== undefined) {
+            return b.month === viewMonth && b.year === viewYear;
+        }
+        if (b.createdAt) {
+            const d = new Date(b.createdAt);
+            return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+        }
+        return false;
     });
 
-    // Helper to calculate spent for a budget
-    const getSpentForCategory = (category) => {
-        return monthlyExpenses
-            .filter(t => t.category === category)
-            .reduce((sum, t) => sum + Number(t.amount), 0);
-    };
-
-    const renderBudget = (b, isCard) => {
-        const spent = getSpentForCategory(b.category);
-        const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0;
-        const isOver = spent > b.amount;
-        const remaining = Math.max(0, b.amount - spent);
-
-        let progressClass = 'bg-success';
-        if (percentage >= 100) progressClass = 'bg-danger';
-        else if (percentage >= 80) progressClass = 'bg-warning';
-
-        // Get transactions for this budget to show details as requested
-        const categoryTransactions = monthlyExpenses
-            .filter(t => t.category === b.category)
-            .slice(0, 3); // Show last 3
-
-        const transactionsHtml = categoryTransactions.length > 0
-            ? `<div class="mt-3 pt-2 border-top">
-                <div class="x-small text-muted mb-1 uppercase fw-bold">Recent activity</div>
-                ${categoryTransactions.map(t => `
-                    <div class="d-flex justify-content-between x-small py-1">
-                        <span class="text-truncate" style="max-width: 120px;">${t.title}</span>
-                        <span class="fw-bold">${formatMoney(t.amount)}</span>
-                    </div>
-                `).join('')}
-               </div>`
-            : '';
-
-        if (isCard) {
-            return `
-                <div class="col-lg-6 col-md-12 mb-4">
-                    <div class="card h-100 border-0 shadow-sm hover-up">
-                        <div class="card-body">
-                            <div class="d-flex justify-content-between align-items-start mb-3">
-                                <div>
-                                    <h5 class="mb-0 fw-bold">${b.category}</h5>
-                                    <span class="badge ${isOver ? 'bg-danger-soft text-danger' : 'bg-success-soft text-success'} mt-1">
-                                        ${isOver ? 'Over Limit' : 'On Track'}
-                                    </span>
-                                </div>
-                                <button class="btn btn-sm btn-light text-danger rounded-circle" onclick="deleteBudget(${b.id})">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted small">Spent: <strong>${formatMoney(spent)}</strong></span>
-                                <span class="text-muted small">Target: <strong>${formatMoney(b.amount)}</strong></span>
-                            </div>
-                            
-                            <div class="progress mb-2" style="height: 8px; border-radius: 10px;">
-                                <div class="progress-bar ${progressClass} progress-bar-striped progress-bar-animated" 
-                                     style="width: ${Math.min(percentage, 100)}%"></div>
-                            </div>
-                            
-                            <div class="d-flex justify-content-between small">
-                                <span class="${isOver ? 'text-danger fw-bold' : 'text-muted'}">${percentage.toFixed(0)}% used</span>
-                                <span class="fw-bold ${isOver ? 'text-danger' : 'text-success'}">${isOver ? 'Over' : 'Left'}: ${formatMoney(Math.abs(b.amount - spent))}</span>
-                            </div>
-                            
-                            ${transactionsHtml}
-                        </div>
-                    </div>
-                </div>`;
-        }
-
-        // Dashboard simpler version
-        return `
-            <div class="mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="fw-medium">${b.category}</span>
-                    <span class="small text-muted">${formatMoney(spent)} / ${formatMoney(b.amount)}</span>
-                </div>
-                <div class="progress" style="height: 6px;">
-                    <div class="progress-bar ${progressClass}" style="width: ${Math.min(percentage, 100)}%"></div>
-                </div>
+    if (monthlyBudgets.length === 0) {
+        const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
+        mainListContainer.innerHTML = `
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-piggy-bank fs-1 mb-3 d-block"></i>
+                <p class="mb-3">No budgets created for ${monthName}.</p>
+                <button class="btn btn-primary" onclick="showModal('addBudgetModal')">Set Budget for ${monthName}</button>
             </div>`;
-    };
-
-    if (container) {
-        if (budgets.length === 0) {
-            container.innerHTML = '<div class="text-center py-4 text-muted small"><i class="bi bi-piggy-bank d-block fs-2 mb-2"></i>No budgets set</div>';
-        } else {
-            container.innerHTML = budgets.slice(0, 4).map(b => renderBudget(b, false)).join('');
-        }
-    }
-
-    if (mainListContainer) {
-        if (budgets.length === 0) {
-            mainListContainer.innerHTML = '<div class="col-12 text-center py-5 text-muted"><p>No budgets found for this month.</p></div>';
-        } else {
-            mainListContainer.innerHTML = `<div class="row g-4">${budgets.map(b => renderBudget(b, true)).join('')}</div>`;
-        }
+    } else {
+        mainListContainer.innerHTML = `<div class="row g-4">${monthlyBudgets.map(b =>
+            `<div class="col-lg-6 col-md-12">${renderBudgetUI(b, monthlyExpenses, true)}</div>`
+        ).join('')}</div>`;
     }
 }
 
@@ -1217,22 +1380,38 @@ function updateAnalyticsPage() {
 
     transactions.forEach(transaction => {
         if (transaction.type === 'income') {
-            totalIncome += transaction.amount;
+            totalIncome += Number(transaction.amount) || 0;
         } else {
-            totalExpenses += transaction.amount;
+            totalExpenses += Number(transaction.amount) || 0;
         }
     });
 
     const totalBalance = totalIncome - totalExpenses;
 
-    // Update analytics summary cards
-    const totalIncomeEl = document.getElementById('totalIncome');
-    const totalExpensesEl = document.getElementById('totalExpenses');
-    const currentBalanceEl = document.getElementById('currentBalance');
+    // Update analytics summary cards (Try both possible ID sets)
+    const incomeEls = [document.getElementById('totalIncome'), document.getElementById('analyticsIncome')];
+    const expenseEls = [document.getElementById('totalExpenses'), document.getElementById('analyticsExpenses')];
+    const balanceEls = [document.getElementById('currentBalance'), document.getElementById('analyticsBalance')];
 
-    if (totalIncomeEl) totalIncomeEl.textContent = formatMoney(totalIncome);
-    if (totalExpensesEl) totalExpensesEl.textContent = formatMoney(totalExpenses);
-    if (currentBalanceEl) currentBalanceEl.textContent = formatMoney(totalBalance);
+    const updateEl = (els, value, color) => {
+        els.forEach(el => {
+            if (el) {
+                // If the element has children (like small or i tags), we only want to update the text part
+                // In our current summary-card component, we just want to update the text content but keep the trend
+                // Actually, formatMoney returns the string with symbol, which is what we want.
+                const formatted = formatMoney(value);
+
+                // Preserve small tag if it exists (for trend display)
+                const small = el.querySelector('small');
+                el.textContent = formatted;
+                if (small) el.appendChild(small);
+            }
+        });
+    };
+
+    updateEl(incomeEls, totalIncome);
+    updateEl(expenseEls, totalExpenses);
+    updateEl(balanceEls, totalBalance);
 }
 
 // Update Budget Page
@@ -1243,36 +1422,67 @@ function updateBudgetPage() {
     const overallProgressBarEl = document.getElementById('overallProgressBar');
     const remainingAmountEl = document.getElementById('remainingAmount');
 
-    // Header updates
-    if (!totalBudgetAmountEl) return;
+    // Not on budget page or elements missing
+    if (!totalBudgetAmountEl && !totalSpentAmountEl) {
+        // Not on budget page or elements missing
+        return;
+    }
+
+    // Reliance on global variables
+    const currentTransactions = transactions || [];
+    const currentBudgets = budgets || [];
+
+    // Use the same view month as the list
+    const viewMonth = (window.budgetViewMonth !== undefined) ? window.budgetViewMonth : new Date().getMonth();
+    const viewYear = (window.budgetViewYear !== undefined) ? window.budgetViewYear : new Date().getFullYear();
+    const monthStr = String(viewMonth + 1).padStart(2, '0');
+    const yearMonthTag = `${viewYear}-${monthStr}`;
+
+    // Update month/year selects if they exist
+    const monthSelect = document.getElementById('budgetMonthSelect');
+    const yearSelect = document.getElementById('budgetYearSelect');
+    if (monthSelect) monthSelect.value = viewMonth;
+    if (yearSelect) yearSelect.value = viewYear;
+
+    // Fallback for legacy display
+    const monthDisplay = document.getElementById('budgetMonthDisplay');
+    if (monthDisplay) {
+        const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long', year: 'numeric' });
+        monthDisplay.textContent = monthName;
+    }
 
     let totalBudgetAmount = 0;
     let totalSpentInBudgetedCategories = 0;
 
-    // Get current local month bounds
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    // Filter budgets for the current view month ONLY
+    const monthlyBudgets = currentBudgets.filter(b => {
+        if (b.month !== undefined && b.year !== undefined) {
+            return b.month === viewMonth && b.year === viewYear;
+        }
+        if (b.createdAt) {
+            const d = new Date(b.createdAt);
+            return d.getMonth() === viewMonth && d.getFullYear() === viewYear;
+        }
+        return false;
+    });
 
-    // Identify budgeted categories
-    const budgetedCategories = new Set(budgets.map(b => b.category));
+    monthlyBudgets.forEach(b => totalBudgetAmount += Number(b.amount) || 0);
 
-    // Calculate sum of budgets
-    budgets.forEach(b => totalBudgetAmount += Number(b.amount));
+    // Calculate total spent ONLY for categories that have budgets in this month
+    // Calculate total spent ONLY for categories that have budgets in this month
+    const budgetedCategories = monthlyBudgets.map(b => b.category.toLowerCase());
 
-    // Calculate spending ONLY for categories that have a budget
-    transactions.forEach(t => {
-        if (t.type !== 'expense') return;
+    // Filter transactions for THIS month using yearMonthTag yyyy-mm
+    const monthlyTransactions = currentTransactions.filter(t => t.type === 'expense' && t.date && t.date.startsWith(yearMonthTag));
 
-        const tDate = new Date(t.date);
-        if (tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear) {
-            if (budgetedCategories.has(t.category)) {
-                totalSpentInBudgetedCategories += Number(t.amount);
-            }
+    monthlyTransactions.forEach(t => {
+        // If the user wants to see TOTAL spending against BUDGETED spending, we can filter.
+        // Based on user feedback, they want distinct separation.
+        if (budgetedCategories.includes(t.category.toLowerCase())) {
+            totalSpentInBudgetedCategories += (Number(t.amount) || 0);
         }
     });
 
-    // Update visuals
     if (totalBudgetAmountEl) totalBudgetAmountEl.textContent = formatMoney(totalBudgetAmount);
     if (totalSpentAmountEl) totalSpentAmountEl.textContent = formatMoney(totalSpentInBudgetedCategories);
 
@@ -1288,8 +1498,123 @@ function updateBudgetPage() {
         remainingAmountEl.className = remaining < 0 ? 'text-danger mb-0' : 'text-muted mb-0';
     }
 
-    // Rely on updateBudgetsList for the cards to avoid double population
     updateBudgetsList();
+    updateBudgetHistory();
+}
+
+/**
+ * Update Budget History - Shows a list of all months where budgets exist
+ */
+function updateBudgetHistory() {
+    const historyContainer = document.getElementById('budgetHistory');
+    if (!historyContainer) return;
+
+    // Group budgets by year and month
+    const grouped = {};
+    budgets.forEach(b => {
+        let m = b.month;
+        let y = b.year;
+
+        if (m === undefined || y === undefined) {
+            const d = new Date(b.createdAt || Date.now());
+            m = d.getMonth();
+            y = d.getFullYear();
+        }
+
+        const key = `${y}-${m}`;
+        if (!grouped[key]) {
+            grouped[key] = {
+                month: m,
+                year: y,
+                totalBudget: 0,
+                spent: 0,
+                categories: 0
+            };
+        }
+
+        grouped[key].totalBudget += Number(b.amount) || 0;
+        grouped[key].categories++;
+
+        // Calculate spent for this month
+        const monthStr = String(m + 1).padStart(2, '0');
+        const yearMonthTag = `${y}-${monthStr}`;
+        const monthlyTransactions = transactions.filter(t =>
+            t.type === 'expense' &&
+            t.date &&
+            t.date.startsWith(yearMonthTag) &&
+            t.category.toLowerCase() === b.category.toLowerCase()
+        );
+
+        grouped[key].spent += monthlyTransactions.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    });
+
+    const entries = Object.values(grouped).sort((a, b) => {
+        if (a.year !== b.year) return b.year - a.year;
+        return b.month - a.month;
+    });
+
+    if (entries.length === 0) {
+        historyContainer.innerHTML = '<p class="text-muted text-center py-3">No budget history available.</p>';
+        return;
+    }
+
+    const monthsLong = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                        <th>Categories</th>
+                        <th>Budget</th>
+                        <th>Spent</th>
+                        <th>Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    // Get current view month/year for highlighting
+    const viewMonth = parseInt(window.budgetViewMonth);
+    const viewYear = parseInt(window.budgetViewYear);
+
+    entries.forEach(e => {
+        const percentage = e.totalBudget > 0 ? (e.spent / e.totalBudget) * 100 : 0;
+        const isOver = e.spent > e.totalBudget;
+
+        html += `
+            <tr class="${e.month === viewMonth && e.year === viewYear ? 'table-primary-soft' : ''}">
+                <td><strong>${monthsLong[e.month]} ${e.year}</strong></td>
+                <td><span class="badge bg-light text-dark border">${e.categories} Categories</span></td>
+                <td>${formatMoney(e.totalBudget)}</td>
+                <td class="${isOver ? 'text-danger fw-bold' : ''}">${formatMoney(e.spent)}</td>
+                <td>
+                    <div class="d-flex align-items-center" style="min-width: 100px;">
+                        <div class="progress flex-grow-1 me-2" style="height: 6px;">
+                            <div class="progress-bar ${isOver ? 'bg-danger' : 'bg-primary'}" style="width: ${Math.min(percentage, 100)}%"></div>
+                        </div>
+                        <span class="small fw-bold">${percentage.toFixed(0)}%</span>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm ${e.month === viewMonth && e.year === viewYear ? 'btn-primary' : 'btn-outline-primary'}" 
+                        onclick="window.setBudgetView(${e.month}, ${e.year});">
+                        ${e.month === viewMonth && e.year === viewYear ? 'Viewing' : 'View'}
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    historyContainer.innerHTML = html;
 }
 
 // Update spending chart (CSS-based, no external libraries)
@@ -1299,27 +1624,30 @@ function updateSpendingChart() {
     if (expenseChart) {
         updateExpenseChartLegend();
     }
-
-    console.log('Charts updated with CSS-based implementation');
 }
 
-// Update expense chart legend with real data
+// Update expense chart legend with real data (Filtered by Month)
 function updateExpenseChartLegend() {
     const chartLegend = document.querySelector('.chart-legend');
     if (!chartLegend) return;
 
-    // Calculate category spending
+    // Use global view month/year if set, else current
+    const viewMonth = (window.budgetViewMonth !== undefined) ? window.budgetViewMonth : new Date().getMonth();
+    const viewYear = (window.budgetViewYear !== undefined) ? window.budgetViewYear : new Date().getFullYear();
+    const monthStr = String(viewMonth + 1).padStart(2, '0');
+    const yearMonthTag = `${viewYear}-${monthStr}`;
+
+    // Calculate category spending for CURRENT VIEW MONTH
     const categorySpending = {};
     let totalExpenses = 0;
 
     transactions
-        .filter(t => t.type === 'expense')
+        .filter(t => t.type === 'expense' && t.date && t.date.startsWith(yearMonthTag))
         .forEach(t => {
             categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
             totalExpenses += t.amount;
         });
 
-    // Colors for different categories
     const categoryColors = {
         'Food': '#3b82f6',
         'Transportation': '#ef4444',
@@ -1331,7 +1659,6 @@ function updateExpenseChartLegend() {
         'Other': '#64748b'
     };
 
-    // Generate legend HTML
     const legendHTML = Object.entries(categorySpending)
         .map(([category, amount]) => {
             const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0;
@@ -1348,8 +1675,10 @@ function updateExpenseChartLegend() {
 
     if (legendHTML) {
         chartLegend.innerHTML = legendHTML;
+        const title = document.querySelector('.chart-container h6');
+        if (title) title.textContent = `Expenses for ${new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long', year: 'numeric' })}`;
     } else {
-        chartLegend.innerHTML = '<div class="legend-item"><span>No expense data available</span></div>';
+        chartLegend.innerHTML = '<div class="legend-item"><span>No expense data available for this month</span></div>';
     }
 }
 
@@ -1360,31 +1689,25 @@ function initializeMobileMenu() {
     const sidebarOverlay = document.getElementById('sidebarOverlay');
 
     if (mobileMenuBtn && sidebar && sidebarOverlay) {
-        // Toggle sidebar on mobile menu button click
         mobileMenuBtn.addEventListener('click', function () {
             const isActive = sidebar.classList.contains('active');
-
             if (isActive) {
-                // Closing sidebar
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
             } else {
-                // Opening sidebar
                 sidebar.classList.add('active');
                 sidebarOverlay.classList.add('active');
                 mobileMenuBtn.classList.add('active');
             }
         });
 
-        // Close sidebar when clicking overlay
         sidebarOverlay.addEventListener('click', function () {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
             mobileMenuBtn.classList.remove('active');
         });
 
-        // Close sidebar when clicking on sidebar links (mobile only)
         const sidebarLinks = sidebar.querySelectorAll('.sidebar-nav-link');
         sidebarLinks.forEach(link => {
             link.addEventListener('click', function () {
@@ -1396,7 +1719,6 @@ function initializeMobileMenu() {
             });
         });
 
-        // Close sidebar on window resize if desktop
         window.addEventListener('resize', function () {
             if (window.innerWidth > 768) {
                 sidebar.classList.remove('active');
@@ -1405,7 +1727,6 @@ function initializeMobileMenu() {
             }
         });
 
-        // Close sidebar on escape key
         document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && sidebar.classList.contains('active')) {
                 sidebar.classList.remove('active');
@@ -1416,17 +1737,9 @@ function initializeMobileMenu() {
     }
 }
 
-
-// Initialize mobile menu when DOM is loaded
 document.addEventListener('DOMContentLoaded', function () {
     initializeMobileMenu();
 });
-
-// Make functions global
-window.showModal = showModal;
-window.hideModal = hideModal;
-window.addIncome = addIncome;
-window.addExpense = addExpense;
 
 // Clear sample data (for testing)
 function clearSampleData() {
@@ -1441,106 +1754,35 @@ function clearSampleData() {
 function debugData() {
     console.log('Transactions:', transactions);
     console.log('Budgets:', budgets);
-    console.log('Table element:', document.getElementById('transactionsTableBody'));
-    console.log('Recent transactions element:', document.getElementById('recentTransactions'));
 }
 
-
-// Show toast notification
+// Show/Hide toast notification
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     const toastBody = document.getElementById('toastBody');
-
-    if (!toast || !toastBody) {
-        // Fallback to alert if toast not available
-        alert(message);
-        return;
-    }
+    if (!toast || !toastBody) { alert(message); return; }
 
     toastBody.textContent = message;
-
-    // Reset classes and set new ones
-    toast.className = 'toast show';
-    if (type === 'success') {
-        toast.classList.add('bg-success', 'text-white');
-    } else if (type === 'error') {
-        toast.classList.add('bg-danger', 'text-white');
-    } else {
-        toast.classList.add('bg-info', 'text-white');
-    }
-
-    // Show the toast
+    toast.className = 'toast show ' + (type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info') + ' text-white';
     toast.style.display = 'block';
-
-    // Auto hide after 3 seconds
-    setTimeout(() => {
-        hideToast();
-    }, 3000);
+    setTimeout(hideToast, 3000);
 }
 
-// Hide toast notification
 function hideToast() {
     const toast = document.getElementById('toast');
-    if (toast) {
-        toast.style.display = 'none';
-        toast.className = 'toast';
-    }
+    if (toast) { toast.style.display = 'none'; toast.className = 'toast'; }
 }
 
-// Make functions and data globally accessible
-window.addIncome = addIncome;
-window.addExpense = addExpense;
-// Guest / Demo Protection Logic
-function isGuest() {
-    const profile = localStorage.getItem('financeTracker_profile');
-    if (!profile) return true; // No profile = guest
-    try {
-        const data = JSON.parse(profile);
-        // Only the specific official demo email is treated as restricted guest
-        return data.email === 'demo@financetracker.com';
-    } catch (e) { return true; }
-}
+function isGuest() { return !localStorage.getItem('financeTracker_profile'); }
+function checkGuestAccess() { return false; }
 
-function checkGuestAccess() {
-    if (isGuest()) {
-        showToast('Demo Mode: Please login or sign up to save changes.', 'error');
-        return false;
-    }
-    return true;
-}
-
-// Wrap original functions with guest checks
-const originalAddTransaction = addTransaction;
-const originalDeleteTransaction = deleteTransaction;
-const originalAddBudget = addBudget;
-const originalDeleteBudget = deleteBudget;
-
-window.addTransaction = function () {
-    if (!checkGuestAccess()) return;
-    return originalAddTransaction.apply(this, arguments);
-};
-
-window.deleteTransaction = function () {
-    if (!checkGuestAccess()) return;
-    return originalDeleteTransaction.apply(this, arguments);
-};
-
-window.addBudget = function () {
-    if (!checkGuestAccess()) return;
-    return originalAddBudget.apply(this, arguments);
-};
-
-window.deleteBudget = function () {
-    if (!checkGuestAccess()) return;
-    return originalDeleteBudget.apply(this, arguments);
-};
-
+window.addTransaction = addTransaction;
+window.deleteTransaction = deleteTransaction;
+window.addBudget = addBudget;
+window.deleteBudget = deleteBudget;
 window.showModal = showModal;
 window.hideModal = hideModal;
-window.clearSampleData = function () {
-    if (!checkGuestAccess()) return;
-    return clearSampleData.apply(this, arguments);
-};
+window.clearSampleData = clearSampleData;
 window.debugData = debugData;
 window.showToast = showToast;
 window.hideToast = hideToast;
@@ -1552,16 +1794,11 @@ window.formatDate = formatDate;
 // Make data arrays globally accessible and reactive
 Object.defineProperty(window, 'transactions', {
     get: () => transactions,
-    set: (value) => {
-        transactions = value;
-        updateAll();
-    }
+    set: (value) => { transactions = value; updateAll(); }
 });
 
 Object.defineProperty(window, 'budgets', {
     get: () => budgets,
-    set: (value) => {
-        budgets = value;
-        updateAll();
-    }
+    set: (value) => { budgets = value; updateAll(); }
 });
+

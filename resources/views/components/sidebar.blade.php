@@ -1,11 +1,11 @@
 <!-- Sidebar Component -->
 <div class="sidebar">
-    <div class="sidebar-header d-flex justify-content-between align-items-center px-4 py-3 border-bottom border-light">
-        <a href="{{ url('/dashboard') }}" class="sidebar-brand mb-0 text-decoration-none d-flex align-items-center">
-            <i class="bi bi-clock me-2 text-primary fs-4"></i>
-            <span class="brand-text fw-bold">FinanceTracker</span>
+    <div class="sidebar-header border-bottom d-flex align-items-center justify-content-between">
+        <a href="{{ url('/dashboard') }}" class="sidebar-brand d-flex align-items-center">
+            <i class="bi bi-clock-fill text-primary"></i>
+            <span class="brand-text ms-2">FinanceTracker</span>
         </a>
-        <button id="sidebarToggle" class="btn btn-link text-muted p-0 d-none d-lg-block">
+        <button id="sidebarToggle" class="btn btn-link text-muted p-0 d-none d-lg-flex align-items-center justify-content-center">
             <i class="bi bi-list fs-4"></i>
         </button>
     </div>

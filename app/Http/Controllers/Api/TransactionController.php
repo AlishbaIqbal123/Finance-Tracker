@@ -14,7 +14,7 @@ class TransactionController extends Controller
      */
     public function index()
     {
-        $transactions = Transaction::all();
+        $transactions = Transaction::where('user_id', auth()->id())->get();
         
         return response()->json([
             'message' => 'Transactions retrieved successfully',
@@ -27,7 +27,7 @@ class TransactionController extends Controller
      */
     public function store(TransactionRequest $request)
     {
-        $transaction = Transaction::create($request->validated());
+        $transaction = Transaction::create(array_merge($request->validated(), ['user_id' => auth()->id()]));
         
         return response()->json([
             'message' => 'Transaction created successfully',
@@ -40,6 +40,13 @@ class TransactionController extends Controller
      */
     public function show(Transaction $transaction)
     {
+        // Ensure the authenticated user owns this transaction
+        if ($transaction->user_id !== auth()->id()) {
+            return response()->json([
+                'message' => 'Unauthorized to view this transaction'
+            ], 403);
+        }
+        
         return response()->json([
             'message' => 'Transaction retrieved successfully',
             'data' => $transaction
@@ -51,6 +58,13 @@ class TransactionController extends Controller
      */
     public function update(TransactionRequest $request, Transaction $transaction)
     {
+        // Ensure the authenticated user owns this transaction
+        if ($transaction->user_id !== auth()->id()) {
+            return response()->json([
+                'message' => 'Unauthorized to update this transaction'
+            ], 403);
+        }
+        
         $transaction->update($request->validated());
         
         return response()->json([
@@ -64,6 +78,13 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
+        // Ensure the authenticated user owns this transaction
+        if ($transaction->user_id !== auth()->id()) {
+            return response()->json([
+                'message' => 'Unauthorized to delete this transaction'
+            ], 403);
+        }
+        
         $transaction->delete();
         
         return response()->json([
@@ -76,7 +97,7 @@ class TransactionController extends Controller
      */
     public function filter(Request $request)
     {
-        $query = Transaction::query();
+        $query = Transaction::where('user_id', auth()->id());
         
         // Apply filters
         if ($request->has('type')) {

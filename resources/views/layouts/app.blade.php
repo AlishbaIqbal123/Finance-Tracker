@@ -52,10 +52,10 @@
                          <!-- User Profile Dropdown -->
                          <div class="dropdown">
                             <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-0 me-sm-2" style="width: 32px; height: 32px;">
-                                    <i class="bi bi-person-fill"></i>
+                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-0 me-sm-2" style="width: 36px; height: 36px;">
+                                    <i class="bi bi-person-fill fs-5"></i>
                                 </div>
-                                <span class="d-none d-sm-inline fw-medium" id="headerUserName">User</span>
+                                <span class="d-none d-sm-inline fw-semibold" id="headerUserName">User</span>
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="dropdownUser1">
                                 <li><a class="dropdown-item" href="{{ url('/profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
@@ -95,6 +95,35 @@
     <!-- Main JS -->
     <script src="{{ asset('js/script.js') }}"></script>
     <script>
+        // Sync Laravel Auth with LocalStorage for script.js compatibility
+        @auth
+            const laravelUser = @json(Auth::user());
+            if (laravelUser) {
+                const currentProfile = localStorage.getItem('financeTracker_profile');
+                let needsUpdate = true;
+                
+                if (currentProfile) {
+                    try {
+                        const parsed = JSON.parse(currentProfile);
+                        if (parsed.email === laravelUser.email) {
+                            needsUpdate = false;
+                        }
+                    } catch(e) {}
+                }
+
+                if (needsUpdate) {
+                    console.log('Syncing Laravel user to LocalStorage profile...');
+                    localStorage.setItem('financeTracker_profile', JSON.stringify({
+                        name: laravelUser.name,
+                        email: laravelUser.email,
+                        id: laravelUser.id
+                    }));
+                    // Force reload logic if key changed
+                    if (window.refreshData) window.refreshData();
+                }
+            }
+        @endauth
+        
         // Clear profile on logout to ensure next user is isolated
         const logoutForm = document.getElementById('logout-form');
         if (logoutForm) {
@@ -103,6 +132,6 @@
             });
         }
     </script>
-        @stack('scripts')
+    @stack('scripts')
 </body>
 </html>

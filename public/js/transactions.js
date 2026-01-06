@@ -208,7 +208,7 @@ function openEditModal(id) {
 }
 
 function updateTransaction() {
-    if (window.checkGuestAccess && !window.checkGuestAccess()) return;
+    if (window.checkGuestAccess && window.checkGuestAccess()) return;
 
     const id = parseInt(document.getElementById('editTransactionId').value);
     const title = document.getElementById('editTitle').value;

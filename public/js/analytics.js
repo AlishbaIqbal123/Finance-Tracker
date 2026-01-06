@@ -1,6 +1,6 @@
 // Analytics Page JavaScript - Chart.js Implementation
 
-let currentTimePeriod = 'month';
+let currentTimePeriod = 'all';
 let analyticsTransactions = [];
 let categoryChartInstance = null;
 let monthlyChartInstance = null;
@@ -65,15 +65,16 @@ window.setTimePeriod = function (period) {
     currentTimePeriod = period;
     updateAnalytics();
 
-    document.querySelectorAll('.btn-group .btn').forEach(btn => {
+    document.querySelectorAll('#periodSelector .btn').forEach(btn => {
         btn.classList.remove('active');
-        if (btn.textContent.trim().toLowerCase() === period) {
+        if (btn.textContent.trim().toLowerCase() === period.toLowerCase()) {
             btn.classList.add('active');
         }
     });
 };
 
 function updateAnalytics() {
+    loadDataFromStore();
     const filteredTransactions = getFilteredTransactions();
     updateKeyMetrics(filteredTransactions);
     renderCategoryChart(filteredTransactions);
@@ -82,33 +83,46 @@ function updateAnalytics() {
 }
 
 function getFilteredTransactions() {
-    const now = new Date();
-    let startDate;
+    console.log(`Filtering for: ${currentTimePeriod}, total data points: ${analyticsTransactions.length}`);
 
-    switch (currentTimePeriod) {
-        case 'week':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 7);
-            break;
-        case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-        case 'year':
-            startDate = new Date(now.getFullYear(), 0, 1);
-            break;
-        default:
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    // Always work on up-to-date data
+    if (window.transactions && window.transactions.length > analyticsTransactions.length) {
+        analyticsTransactions = [...window.transactions];
     }
+
+    const now = new Date();
+    const currentMonth = now.getMonth();
+    const currentYear = now.getFullYear();
 
     return analyticsTransactions.filter(t => {
         if (!t.date) return false;
-        return new Date(t.date) >= startDate;
+        const tDate = new Date(t.date);
+        if (isNaN(tDate.getTime())) return false;
+
+        if (currentTimePeriod === 'week') {
+            const weekAgo = new Date(now);
+            weekAgo.setDate(now.getDate() - 7);
+            return tDate >= weekAgo;
+        } else if (currentTimePeriod === 'month') {
+            return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+        } else if (currentTimePeriod === 'year') {
+            // Include everything from the CURRENT calendar year.
+            return tDate.getFullYear() === currentYear;
+        } else if (currentTimePeriod === 'all') {
+            return true;
+        }
+        return true;
     });
 }
 
 function updateKeyMetrics(filteredTransactions) {
-    const income = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-    const expenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const balance = income - expenses;
+    const income = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const expenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+
+    // Calculate total balance (Net Worth) using ALL transactions, not just filtered ones
+    const totalIncome = analyticsTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const totalExpenses = analyticsTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+    const netWorth = totalIncome - totalExpenses;
 
     const els = {
         income: document.getElementById('analyticsIncome'),
@@ -116,9 +130,19 @@ function updateKeyMetrics(filteredTransactions) {
         balance: document.getElementById('analyticsBalance')
     };
 
-    if (els.income) els.income.textContent = formatMoney(income).replace(/[^\d.-]/g, '');
-    if (els.expenses) els.expenses.textContent = formatMoney(expenses).replace(/[^\d.-]/g, '');
-    if (els.balance) els.balance.textContent = formatMoney(balance).replace(/[^\d.-]/g, '');
+    const safeUpdate = (el, val, subText) => {
+        if (!el) return;
+        const small = el.querySelector('small');
+        el.textContent = formatMoney(val);
+        if (small) {
+            if (subText) small.textContent = subText;
+            el.appendChild(small);
+        }
+    };
+
+    safeUpdate(els.income, income);
+    safeUpdate(els.expenses, expenses);
+    safeUpdate(els.balance, netWorth);
 }
 
 function renderCategoryChart(filteredTransactions) {
@@ -221,9 +245,13 @@ function renderMonthlyChart() {
 
         months.push(d.toLocaleDateString('en-US', { month: 'short' }));
 
-        const monthTrans = analyticsTransactions.filter(t => t.date && t.date.startsWith(monthKey));
-        incomeData.push(monthTrans.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0));
-        expenseData.push(monthTrans.filter(t => t.type === 'expense').reduce((s, t) => s + t.amount, 0));
+        const monthTrans = analyticsTransactions.filter(t => {
+            if (!t.date) return false;
+            const tDate = new Date(t.date);
+            return tDate.getMonth() === d.getMonth() && tDate.getFullYear() === d.getFullYear();
+        });
+        incomeData.push(monthTrans.filter(t => t.type === 'income').reduce((s, t) => s + (Number(t.amount) || 0), 0));
+        expenseData.push(monthTrans.filter(t => t.type === 'expense').reduce((s, t) => s + (Number(t.amount) || 0), 0));
 
         console.log(`Chart data for ${monthKey}:`, {
             income: incomeData[incomeData.length - 1],

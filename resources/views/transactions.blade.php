@@ -114,12 +114,22 @@
                             <label class="form-label">Category</label>
                             <select class="form-select" id="transactionCategory" required>
                                 <option value="" selected>Select category</option>
+                                <option value="Salary">Salary</option>
+                                <option value="Freelance">Freelance</option>
                                 <option value="Food">Food</option>
+                                <option value="Transportation">Transportation</option>
                                 <option value="Shopping">Shopping</option>
                                 <option value="Bills">Bills</option>
-                                <option value="Salary">Salary</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Education">Education</option>
+                                <option value="Subscriptions">Subscriptions</option>
                                 <option value="Other">Other</option>
                             </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="transactionDate" required value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Description (Optional)</label>

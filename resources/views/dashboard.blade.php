@@ -158,6 +158,10 @@
                             <input type="number" class="form-control" id="incomeAmount" step="0.01" required>
                         </div>
                         <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="incomeDate" required value="{{ date('Y-m-d') }}">
+                        </div>
+                        <div class="mb-3">
                             <label class="form-label">Category</label>
                             <select class="form-select" id="incomeCategory" required>
                                 <option value="" selected>Select category</option>
@@ -199,6 +203,10 @@
                         <div class="mb-3">
                             <label class="form-label">Amount</label>
                             <input type="number" class="form-control" id="expenseAmount" step="0.01" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="expenseDate" required value="{{ date('Y-m-d') }}">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Category</label>

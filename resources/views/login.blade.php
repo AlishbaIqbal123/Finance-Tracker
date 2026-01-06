@@ -8,40 +8,42 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+    <script src="{{ asset('js/theme.js') }}"></script>
     <style>
         .auth-container {
-            min-vh-100;
-            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            background: var(--bg-body);
             display: flex;
             align-items: center;
             justify-content: center;
             padding: 20px;
             position: relative;
             overflow: hidden;
+            transition: background 0.5s ease;
         }
 
         .auth-blob {
             position: absolute;
             width: 500px;
             height: 500px;
-            background: rgba(13, 110, 253, 0.1);
+            background: rgba(79, 209, 197, 0.1);
             filter: blur(80px);
             border-radius: 50%;
             z-index: 0;
         }
 
         .auth-blob-1 { top: -100px; right: -100px; }
-        .auth-blob-2 { bottom: -100px; left: -100px; background: rgba(139, 92, 246, 0.1); }
+        .auth-blob-2 { bottom: -100px; left: -100px; background: rgba(99, 102, 241, 0.1); }
 
         .auth-card {
             width: 100%;
             max-width: 450px;
-            background: rgba(255, 255, 255, 0.85);
+            background: var(--bg-card);
             backdrop-filter: blur(15px);
             -webkit-backdrop-filter: blur(15px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            border: 1px solid var(--border-color);
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            box-shadow: var(--shadow-lg);
             padding: 40px;
             position: relative;
             z-index: 1;
@@ -50,7 +52,7 @@
 
         .auth-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+            box-shadow: var(--shadow-xl);
         }
 
         .auth-header {
@@ -61,7 +63,7 @@
         .auth-logo {
             width: 64px;
             height: 64px;
-            background: var(--primary-color, #0d6efd);
+            background: var(--primary-color);
             color: white;
             border-radius: 16px;
             display: inline-flex;
@@ -69,15 +71,16 @@
             justify-content: center;
             font-size: 32px;
             margin-bottom: 20px;
-            box-shadow: 0 10px 20px rgba(13, 110, 253, 0.2);
+            box-shadow: 0 10px 20px rgba(79, 209, 197, 0.3);
         }
 
         .auth-nav {
             display: flex;
-            background: rgba(0, 0, 0, 0.05);
+            background: var(--bg-secondary);
             padding: 5px;
             border-radius: 15px;
             margin-bottom: 30px;
+            border: 1px solid var(--border-color);
         }
 
         .auth-nav-btn {
@@ -86,34 +89,38 @@
             background: transparent;
             padding: 10px;
             font-weight: 600;
-            color: #6c757d;
+            color: var(--text-secondary);
             border-radius: 12px;
             transition: all 0.3s ease;
         }
 
         .auth-nav-btn.active {
-            background: white;
-            color: var(--primary-color, #0d6efd);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            background: var(--bg-card);
+            color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
         }
 
         .form-label {
             font-weight: 600;
-            color: #495057;
+            color: var(--text-primary);
             font-size: 0.9rem;
         }
 
         .form-control {
-            border: 2px solid #edeff2;
+            background-color: var(--bg-secondary);
+            border: 2px solid var(--border-color);
             border-radius: 12px;
             padding: 12px 16px;
             transition: all 0.2s ease;
             font-size: 1rem;
+            color: var(--text-primary);
         }
 
         .form-control:focus {
-            border-color: var(--primary-color, #0d6efd);
-            box-shadow: 0 0 0 4px rgba(13, 110, 253, 0.1);
+            background-color: var(--bg-card);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px var(--primary-light);
+            color: var(--text-primary);
         }
 
         .btn-primary {
@@ -122,9 +129,14 @@
             font-weight: 700;
             letter-spacing: 0.5px;
             transition: all 0.3s ease;
+            background-color: var(--primary-color);
+            border: none;
         }
 
-
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+        }
 
         #loginForm, #signupForm {
             transition: all 0.3s ease;
@@ -142,25 +154,43 @@
         .demo-badge {
             cursor: pointer;
             transition: all 0.2s ease;
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
         }
         .demo-badge:hover {
             opacity: 0.8;
-            transform: scale(1.05);
+            transform: scale(1.02);
+            background-color: var(--primary-light);
+        }
+        
+        .theme-toggle-fixed {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
         }
     </style>
 </head>
-<body>
+<body class="theme-light">
+    <!-- Theme Toggle -->
+    <div class="theme-toggle-fixed">
+                <button class="btn btn-link text-primary rounded-circle p-2 me-2 theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="bi bi-moon-stars-fill dark-icon"></i>
+                    <i class="bi bi-sun-fill light-icon"></i>
+                </button>
+    </div>
+
     <div class="auth-container">
         <div class="auth-blob auth-blob-1"></div>
         <div class="auth-blob auth-blob-2"></div>
 
-        <div class="auth-card">
+        <div class="auth-card shadow-lg">
             <div class="auth-header">
                 <div class="auth-logo">
-                    <i class="bi bi-clock"></i>
+                    <i class="bi bi-clock-fill"></i>
                 </div>
-                <h3 class="fw-bold text-dark mb-1">FinanceTracker</h3>
-                <p class="text-muted small">Master your money, build your future</p>
+                <h3 class="fw-bold mb-1" style="color: var(--text-primary);">FinanceTracker</h3>
+                <p class="small" style="color: var(--text-secondary);">Master your money, build your future</p>
             </div>
 
             <div class="auth-nav">
@@ -178,7 +208,7 @@
                     <div class="mb-4">
                         <div class="d-flex justify-content-between">
                             <label class="form-label">Password</label>
-                            <a href="#" class="small text-decoration-none">Forgot?</a>
+                            <a href="#" class="small text-decoration-none text-primary">Forgot?</a>
                         </div>
                         <input type="password" class="form-control" id="loginPassword" placeholder="••••••••" required>
                     </div>
@@ -187,15 +217,15 @@
                     </button>
                 </form>
 
-
-
-                <div class="mt-4 pt-3 border-top">
-                    <div class="bg-light p-3 rounded-3 demo-badge" id="demoAction">
+                <div class="mt-4 pt-3 border-top" style="border-color: var(--border-color) !important;">
+                    <div class="p-3 rounded-4 demo-badge" id="demoAction">
                         <div class="d-flex align-items-center">
-                            <i class="bi bi-person-badge-fill text-primary fs-4 me-3"></i>
+                            <div class="bg-primary text-white rounded-circle p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                <i class="bi bi-person-badge-fill"></i>
+                            </div>
                             <div>
-                                <div class="fw-bold small">Demo Account</div>
-                                <div class="text-muted extra-small" style="font-size: 11px;">Click to auto-fill credentials</div>
+                                <div class="fw-bold small" style="color: var(--text-primary);">Demo Account</div>
+                                <div class="extra-small" style="font-size: 11px; color: var(--text-secondary);">Click to auto-fill credentials</div>
                             </div>
                         </div>
                     </div>
@@ -219,8 +249,8 @@
                     </div>
                     <div class="mb-4 form-check">
                         <input type="checkbox" class="form-check-input" id="terms" required>
-                        <label class="form-check-label small text-muted" for="terms">
-                            I agree to the <a href="#" class="text-decoration-none">Terms & Conditions</a>
+                        <label class="form-check-label small" for="terms" style="color: var(--text-secondary);">
+                            I agree to the <a href="#" class="text-decoration-none text-primary">Terms & Conditions</a>
                         </label>
                     </div>
                     <button type="submit" class="btn btn-primary w-100 shadow-sm">
@@ -231,7 +261,6 @@
         </div>
     </div>
 
-    <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function switchAuth(type) {

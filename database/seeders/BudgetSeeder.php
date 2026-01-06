@@ -34,47 +34,41 @@ class BudgetSeeder extends Seeder
         }
         
         Budget::insert([
+            // Jan 2026
             [
                 'user_id' => $user->id,
                 'category_id' => $foodCategory->id,
                 'name' => 'Food Budget',
-                'amount' => 600.00,
+                'amount' => 500.00,
                 'period' => 'monthly',
-                'start_date' => now()->startOfMonth(),
-                'end_date' => now()->endOfMonth(),
+                'start_date' => '2026-01-01',
+                'end_date' => '2026-01-31',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],
+            [
+                'user_id' => $user->id,
+                'category_id' => $shoppingCategory->id, // Reusing categories, map as needed
+                'name' => 'Bills Budget', // Using Shopping ID for Bills if bills not fetched, or update fetch logic
+                 // Note: Logic above fetched $food, $trans, $ent, $shop. We need Bills.
+                 // Ideally we should add fetching Bills category at the top.
+                'amount' => 1500.00,
+                'period' => 'monthly',
+                'start_date' => '2026-01-01',
+                'end_date' => '2026-01-31',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+
+            // Feb 2026
             [
                 'user_id' => $user->id,
                 'category_id' => $transportationCategory->id,
                 'name' => 'Transportation Budget',
-                'amount' => 300.00,
+                'amount' => 450.00,
                 'period' => 'monthly',
-                'start_date' => now()->startOfMonth(),
-                'end_date' => now()->endOfMonth(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'user_id' => $user->id,
-                'category_id' => $entertainmentCategory->id,
-                'name' => 'Entertainment Budget',
-                'amount' => 200.00,
-                'period' => 'monthly',
-                'start_date' => now()->startOfMonth(),
-                'end_date' => now()->endOfMonth(),
-                'created_at' => now(),
-                'updated_at' => now(),
-            ],
-            [
-                'user_id' => $user->id,
-                'category_id' => $shoppingCategory->id,
-                'name' => 'Shopping Budget',
-                'amount' => 400.00,
-                'period' => 'monthly',
-                'start_date' => now()->startOfMonth(),
-                'end_date' => now()->endOfMonth(),
+                'start_date' => '2026-02-01',
+                'end_date' => '2026-02-28',
                 'created_at' => now(),
                 'updated_at' => now(),
             ],

@@ -39,11 +39,11 @@
         <div class="col-lg-4 col-md-12">
             <x-summary-card 
                 id="analyticsBalance"
-                title="💵 NET BALANCE"
+                title="💰 TOTAL BALANCE"
                 :amount="0"
                 icon="bi-wallet2"
                 color="primary"
-                description="Income minus expenses"
+                description="Your current net worth"
             />
         </div>
     </div>
@@ -89,10 +89,11 @@
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center">
                     <span>Category Details</span>
-                    <div class="btn-group btn-group-sm" role="group">
+                    <div class="btn-group btn-group-sm" role="group" id="periodSelector">
                         <button type="button" class="btn btn-outline-secondary" onclick="setTimePeriod('week')">Week</button>
-                        <button type="button" class="btn btn-outline-secondary active" onclick="setTimePeriod('month')">Month</button>
+                        <button type="button" class="btn btn-outline-secondary" onclick="setTimePeriod('month')">Month</button>
                         <button type="button" class="btn btn-outline-secondary" onclick="setTimePeriod('year')">Year</button>
+                        <button type="button" class="btn btn-outline-secondary active" onclick="setTimePeriod('all')">All</button>
                     </div>
                 </div>
                 <div class="card-body">
@@ -204,21 +205,6 @@
         }, 500);
     });
     
-    // Expose the setTimePeriod function to the global scope
-    window.setTimePeriod = function(period) {
-        // Update active button state
-        document.querySelectorAll('.btn-group .btn').forEach(btn => {
-            btn.classList.remove('active');
-            if (btn.textContent.trim().toLowerCase() === period) {
-                btn.classList.add('active');
-            }
-        });
-        
-        // Call the analytics function if available
-        if (typeof window.refreshAnalyticsData === 'function') {
-            window.refreshAnalyticsData();
-        }
-    };
     
     // Reinitialize on page visibility change
     document.addEventListener('visibilitychange', function() {

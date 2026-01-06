@@ -116,6 +116,37 @@ h6 {
     color: #f7fafc !important;
 }
 
+/* Primary Color Overrides */
+.text-primary {
+    color: var(--primary-color) !important;
+}
+
+.bg-primary {
+    background-color: var(--primary-color) !important;
+}
+
+.btn-primary {
+    background-color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: var(--primary-hover) !important;
+    border-color: var(--primary-hover) !important;
+}
+
+.btn-outline-primary {
+    color: var(--primary-color) !important;
+    border-color: var(--primary-color) !important;
+}
+
+.btn-outline-primary:hover {
+    background-color: var(--primary-color) !important;
+    color: #fff !important;
+}
+
 .btn-light {
     background-color: var(--bg-secondary) !important;
     color: var(--text-primary) !important;
@@ -154,9 +185,11 @@ h6 {
 .sidebar-header {
     flex-shrink: 0;
     height: 70px;
-    /* Fixed height for consistency */
     display: flex;
-    /* Ensure it behaves as flex container */
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    background: var(--bg-sidebar);
 }
 
 .sidebar-nav {
@@ -210,8 +243,8 @@ h6 {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: 48px;
+    height: 48px;
 }
 
 .sidebar.collapsed .sidebar-brand {
@@ -247,24 +280,44 @@ h6 {
     padding: 12px;
 }
 
+#sidebarToggle {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    transition: all 0.2s ease;
+    border: 1px solid transparent;
+}
+
+#sidebarToggle:hover {
+    background: var(--primary-light);
+    color: var(--primary-color) !important;
+    border-color: var(--primary-light);
+}
+
 .sidebar-brand {
     display: flex;
     align-items: center;
-    padding: 0 24px 32px;
     color: var(--primary-color);
     text-decoration: none;
     font-weight: 800;
-    font-size: 20px;
+    font-size: 1.25rem;
     letter-spacing: -0.5px;
+    margin-bottom: 0;
 }
 
 .brand-text {
     color: var(--text-primary) !important;
+    font-weight: 700;
+    font-size: 1.1rem;
 }
 
 .sidebar-brand i {
-    margin-right: 12px;
-    font-size: 24px;
+    margin-right: 10px;
+    font-size: 22px;
+    opacity: 0.9;
 }
 
 .sidebar-nav {
@@ -876,10 +929,11 @@ h6 {
 
 /* Landing Page Decorations */
 .text-gradient {
-    background: linear-gradient(135deg, var(--primary-color), #8b5cf6);
+    background: linear-gradient(135deg, var(--primary-color), #6366f1, #a855f7);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    display: inline-block;
 }
 
 .absolute-bg-gradient {
@@ -888,13 +942,24 @@ h6 {
     left: 0;
     right: 0;
     bottom: 0;
-    background: radial-gradient(circle at 10% 20%, rgba(13, 110, 253, 0.05) 0%, rgba(13, 110, 253, 0) 50%),
-        radial-gradient(circle at 90% 80%, rgba(139, 92, 246, 0.05) 0%, rgba(139, 92, 246, 0) 50%);
+    background: radial-gradient(circle at 10% 20%, rgba(79, 209, 197, 0.1) 0%, rgba(79, 209, 197, 0) 50%),
+        radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0) 50%);
     z-index: 0;
+    transition: all 0.5s ease;
+}
+
+.theme-dark .absolute-bg-gradient {
+    background: radial-gradient(circle at 10% 20%, rgba(79, 209, 197, 0.15) 0%, rgba(79, 209, 197, 0) 50%),
+        radial-gradient(circle at 90% 80%, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 50%);
 }
 
 .bg-primary-soft {
     background-color: rgba(13, 110, 253, 0.1);
+}
+
+.bg-light-soft {
+    background-color: var(--bg-secondary);
+    opacity: 0.8;
 }
 
 .bg-green-soft {
@@ -913,12 +978,47 @@ h6 {
     background-color: rgba(239, 68, 68, 0.1);
 }
 
-.hover-scale {
-    transition: transform 0.2s ease;
+.user-avatar {
+    width: 48px;
+    height: 48px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 12px var(--primary-light);
 }
 
-.hover-scale:hover {
-    transform: translateY(-2px);
+.sidebar-brand i {
+    color: var(--primary-color) !important;
+}
+
+.mobile-menu-btn {
+    display: none;
+    border: none;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.mobile-menu-btn:hover {
+    background: var(--border-color);
+}
+
+@media (max-width: 991px) {
+    .mobile-menu-btn {
+        display: flex;
+    }
 }
 
 .shape-blob {
@@ -979,20 +1079,165 @@ h6 {
 /* Welcome Page Hero */
 .hero-section {
     position: relative;
-    padding: 100px 0;
+    padding: 120px 0 80px;
     overflow: hidden;
+    background: var(--bg-body);
 }
 
 .hero-content h1 {
-    font-size: 3.5rem;
+    font-size: 4rem;
     font-weight: 800;
-    line-height: 1.2;
+    line-height: 1.1;
     margin-bottom: 24px;
+    color: var(--text-primary);
+}
+
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
 }
 
 .hero-description {
     font-size: 1.25rem;
     color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.backdrop-blur-md {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Theme-aware Selects and Dropdowns */
+.theme-aware-select {
+    cursor: pointer;
+    color: var(--text-primary) !important;
+}
+
+.theme-aware-select option {
+    background-color: var(--bg-card);
+    color: var(--text-primary);
+    padding: 10px;
+}
+
+/* Fix for standard select hover/active colors */
+.theme-aware-select:focus {
+    box-shadow: none !important;
+    border-color: var(--primary-color) !important;
+}
+
+/* Custom indicator for current viewing month in history */
+.table-primary-soft {
+    background-color: var(--primary-light) !important;
+    border-left: 4px solid var(--primary-color) !important;
+}
+
+/* Nav Arrows */
+.nav-arrow {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    color: var(--text-primary) !important;
+}
+
+.nav-arrow:hover {
+    background-color: var(--primary-light);
+    color: var(--primary-color) !important;
+}
+
+/* Better responsive table for history */
+.table-responsive {
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+}
+
+/* Scroll-to-top transition helper */
+html {
+    scroll-behavior: smooth;
+}
+
+.table-primary-soft {
+    background-color: var(--primary-light) !important;
+    border-left: 5px solid var(--primary-color) !important;
+    font-weight: 500;
+}
+
+.theme-aware-select option:hover,
+.theme-aware-select option:focus,
+.theme-aware-select option:active {
+    background-color: var(--primary-color) !important;
+    color: white !important;
+}
+
+/* Fix arrows in dark mode */
+.theme-dark .link-dark {
+    color: #cbd5e0 !important;
+}
+
+.theme-dark .link-dark:hover {
+    color: #f7fafc !important;
+}
+
+/* Standardize card typography */
+.card-header h2,
+.card-header h4 {
+    transition: font-size 0.2s ease;
+}
+
+.budget-summary-val {
+    font-size: 1.5rem !important;
+    font-weight: 700;
+}
+
+/* Theme icon visibility */
+.theme-dark .dark-icon {
+    display: none !important;
+}
+
+.theme-dark .light-icon {
+    display: inline-block !important;
+}
+
+body:not(.theme-dark) .light-icon {
+    display: none !important;
+}
+
+body:not(.theme-dark) .dark-icon {
+    display: inline-block !important;
+}
+
+/* Auth Pages Theme Overrides */
+.theme-dark .auth-container {
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%) !important;
+}
+
+.theme-dark .auth-card {
+    background: rgba(45, 55, 72, 0.8) !important;
+    border-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.theme-dark .form-control {
+    background-color: #1a202c !important;
+    border-color: #4a5568 !important;
+    color: #f7fafc !important;
+}
+
+.theme-dark .form-label {
+    color: #cbd5e0 !important;
+}
+
+.theme-dark .auth-nav {
+    background: rgba(255, 255, 255, 0.05) !important;
+}
+
+.theme-dark .auth-nav-btn.active {
+    background: #4a5568 !important;
+    color: #4fd1c5 !important;
 }
 
 /* Theme Utilities */

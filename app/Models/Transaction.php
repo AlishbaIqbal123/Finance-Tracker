@@ -13,6 +13,24 @@ class Transaction extends Model
      *
      * @var array<int, string>
      */
+
+    /**
+     * Get the user that owns the transaction.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the category that the transaction belongs to.
+     */
+    public function categoryModel()
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    /**
     protected $fillable = [
         'user_id',
         'category_id',
@@ -64,6 +82,14 @@ class Transaction extends Model
     public function scopeCategory($query, $categoryId)
     {
         return $query->where('category_id', $categoryId);
+    }
+
+    /**
+     * Scope a query to filter by category.
+     */
+    public function scopeByCategory($query, $category)
+    {
+        return $query->where('category', $category);
     }
 
     /**

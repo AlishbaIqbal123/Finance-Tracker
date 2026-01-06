@@ -100,12 +100,44 @@
         });
         
         function initializeProfile() {
-            // Load saved profile data
+            // First, try to get data from Laravel Auth (if available)
+            @auth
+                const laravelUser = @json(Auth::user());
+                if (laravelUser) {
+                    document.getElementById('profileName').value = laravelUser.name || '';
+                    document.getElementById('profileEmail').value = laravelUser.email || '';
+                    
+                    // Also update localStorage to keep it in sync
+                    const profileData = {
+                        name: laravelUser.name,
+                        email: laravelUser.email,
+                        id: laravelUser.id
+                    };
+                    localStorage.setItem('financeTracker_profile', JSON.stringify(profileData));
+                    
+                    // Load preferences and return
+                    loadPreferences();
+                    return;
+                }
+            @endauth
+            
+            // Fallback to localStorage if not authenticated
             const savedProfile = localStorage.getItem('financeTracker_profile');
             if (savedProfile) {
-                const profileData = JSON.parse(savedProfile);
-                document.getElementById('profileName').value = profileData.name || '';
-                document.getElementById('profileEmail').value = profileData.email || 'demo@financetracker.com';
+                try {
+                    const profileData = JSON.parse(savedProfile);
+                    document.getElementById('profileName').value = profileData.name || '';
+                    document.getElementById('profileEmail').value = profileData.email || 'demo@financetracker.com';
+                } catch (e) {
+                    console.error('Error parsing profile data:', e);
+                    // Set default values
+                    document.getElementById('profileName').value = '';
+                    document.getElementById('profileEmail').value = 'demo@financetracker.com';
+                }
+            } else {
+                // No profile data found, set defaults
+                document.getElementById('profileName').value = '';
+                document.getElementById('profileEmail').value = 'demo@financetracker.com';
             }
             
             // Load preferences
