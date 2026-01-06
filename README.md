@@ -134,8 +134,6 @@ The application features a modern, responsive design with multiple theme options
     - Open your browser and go to `http://localhost:8000`
 
 ## Screenshots
-
-*[Note: Screenshots will be added here showing the application in both light and dark themes. The application features a beautiful pastel color scheme that provides excellent contrast and visual appeal in both themes.]*
 <img width="1911" height="925" alt="image" src="https://github.com/user-attachments/assets/2fbdc0bf-1878-4607-9ee7-d44e408a8614" />
 <img width="1919" height="928" alt="image" src="https://github.com/user-attachments/assets/8377ccf3-08f9-40d8-aa53-7d85c46b2cb3" />
 <img width="1919" height="932" alt="image" src="https://github.com/user-attachments/assets/7c80d35f-4a6f-4aed-9247-38ea947bb31d" />
