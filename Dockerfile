@@ -44,8 +44,14 @@ RUN php artisan config:cache
 RUN php artisan route:cache
 RUN php artisan view:cache
 
+# Update Apache to listen on the port provided by Koyeb
+RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
+
+# Add ServerName to suppress Apache warning
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
+
 # Expose port (Koyeb uses $PORT)
 EXPOSE 80
 
 # Start script
-CMD php artisan migrate --force; apache2-foreground
+CMD php artisan migrate --force; sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && apache2-foreground
