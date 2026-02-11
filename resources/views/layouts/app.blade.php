@@ -232,10 +232,19 @@
             const sidebar = document.querySelector('.sidebar');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
             
+            console.log('Sidebar toggle initialized:', {
+                sidebarToggle: !!sidebarToggle,
+                sidebar: !!sidebar,
+                sidebarOverlay: !!sidebarOverlay
+            });
+            
             if (sidebarToggle && sidebar) {
                 // Toggle sidebar on button click
-                sidebarToggle.addEventListener('click', function() {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    console.log('Sidebar toggle clicked');
                     sidebar.classList.toggle('active');
+                    console.log('Sidebar active:', sidebar.classList.contains('active'));
                     if (sidebarOverlay) {
                         sidebarOverlay.classList.toggle('active');
                     }
@@ -250,6 +259,7 @@
                 // Close sidebar when clicking overlay
                 if (sidebarOverlay) {
                     sidebarOverlay.addEventListener('click', function() {
+                        console.log('Overlay clicked');
                         sidebar.classList.remove('active');
                         sidebarOverlay.classList.remove('active');
                         document.body.style.overflow = '';
@@ -261,6 +271,7 @@
                 sidebarLinks.forEach(link => {
                     link.addEventListener('click', function() {
                         if (window.innerWidth < 1024) {
+                            console.log('Sidebar link clicked, closing sidebar');
                             sidebar.classList.remove('active');
                             if (sidebarOverlay) {
                                 sidebarOverlay.classList.remove('active');
@@ -269,6 +280,8 @@
                         }
                     });
                 });
+            } else {
+                console.error('Sidebar toggle elements not found!');
             }
         });
     </script>
