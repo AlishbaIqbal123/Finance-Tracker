@@ -10,40 +10,41 @@
         </button>
     </div>
     
-    <ul class="sidebar-nav">
+    <ul class="sidebar-nav mt-3">
         <li class="sidebar-nav-item">
             <a href="{{ url('/dashboard') }}" class="sidebar-nav-link {{ request()->is('dashboard') ? 'active' : '' }}">
-                <i class="bi bi-house"></i>
+                <i class="bi bi-house-door{{ request()->is('dashboard') ? '-fill' : '' }}"></i>
                 <span>Dashboard</span>
             </a>
         </li>
         <li class="sidebar-nav-item">
             <a href="{{ url('/transactions') }}" class="sidebar-nav-link {{ request()->is('transactions*') ? 'active' : '' }}">
-                <i class="bi bi-receipt"></i>
+                <i class="bi bi-receipt{{ request()->is('transactions*') ? '-cutoff' : '' }}"></i>
                 <span>Transactions</span>
             </a>
         </li>
         <li class="sidebar-nav-item">
             <a href="{{ url('/budget') }}" class="sidebar-nav-link {{ request()->is('budget*') ? 'active' : '' }}">
-                <i class="bi bi-piggy-bank"></i>
-                <span>Budget</span>
+                <i class="bi bi-piggy-bank{{ request()->is('budget*') ? '-fill' : '' }}"></i>
+                <span>Budget Planner</span>
             </a>
         </li>
         <li class="sidebar-nav-item">
             <a href="{{ url('/analytics') }}" class="sidebar-nav-link {{ request()->is('analytics*') ? 'active' : '' }}">
-                <i class="bi bi-bar-chart"></i>
+                <i class="bi bi-bar-chart{{ request()->is('analytics*') ? '-line-fill' : '' }}"></i>
                 <span>Analytics</span>
             </a>
         </li>
+        <li class="sidebar-nav-separator my-3 border-top mx-3 opacity-50"></li>
         <li class="sidebar-nav-item">
             <a href="{{ url('/profile') }}" class="sidebar-nav-link {{ request()->is('profile*') ? 'active' : '' }}">
-                <i class="bi bi-person"></i>
-                <span>Profile</span>
+                <i class="bi bi-person{{ request()->is('profile*') ? '-badge-fill' : '' }}"></i>
+                <span>My Profile</span>
             </a>
         </li>
         <li class="sidebar-nav-item">
             <a href="{{ url('/settings') }}" class="sidebar-nav-link {{ request()->is('settings*') ? 'active' : '' }}">
-                <i class="bi bi-gear"></i>
+                <i class="bi bi-gear{{ request()->is('settings*') ? '-fill' : '' }}"></i>
                 <span>Settings</span>
             </a>
         </li>

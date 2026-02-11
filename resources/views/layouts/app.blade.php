@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'FinanceTracker')</title>
-    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -78,6 +79,34 @@
             @yield('content')
         </div>
     </div>
+
+    <!-- Floating Action Button for Mobile -->
+    @unless(request()->is('/') || request()->is('welcome') || request()->is('login') || request()->is('register'))
+    <button class="fab-btn d-md-none" onclick="showModal('addTransactionModal')" title="Add Transaction">
+        <i class="bi bi-plus-lg"></i>
+    </button>
+
+    <!-- Bottom Navigation for Mobile -->
+    <nav class="bottom-nav d-md-none">
+        <a href="{{ url('/dashboard') }}" class="bottom-nav-item {{ request()->is('dashboard') ? 'active' : '' }}">
+            <i class="bi bi-house-door-fill"></i>
+            <span>Home</span>
+        </a>
+        <a href="{{ url('/transactions') }}" class="bottom-nav-item {{ request()->is('transactions*') ? 'active' : '' }}">
+            <i class="bi bi-receipt"></i>
+            <span>Trans</span>
+        </a>
+        <div class="bottom-nav-spacer"></div>
+        <a href="{{ url('/budget') }}" class="bottom-nav-item {{ request()->is('budget*') ? 'active' : '' }}">
+            <i class="bi bi-piggy-bank"></i>
+            <span>Budget</span>
+        </a>
+        <a href="{{ url('/analytics') }}" class="bottom-nav-item {{ request()->is('analytics*') ? 'active' : '' }}">
+            <i class="bi bi-bar-chart-fill"></i>
+            <span>Charts</span>
+        </a>
+    </nav>
+    @endunless
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">
