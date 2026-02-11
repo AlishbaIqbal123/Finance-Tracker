@@ -61,15 +61,15 @@
     <!-- Quick Actions -->
     <div class="row mb-4">
         <div class="col-md-6 mb-3">
-            <button class="btn btn-success w-100 py-3" onclick="showModal('addIncomeModal')">
-                <i class="bi bi-plus-circle me-2"></i>
-                Add Income
+            <button class="btn btn-success w-100 py-3 d-flex align-items-center justify-content-center gap-2" onclick="openGlobalTransaction('income')">
+                <i class="bi bi-plus-circle fs-5"></i>
+                <span>Add Income</span>
             </button>
         </div>
         <div class="col-md-6 mb-3">
-            <button class="btn btn-danger w-100 py-3" onclick="showModal('addExpenseModal')">
-                <i class="bi bi-dash-circle me-2"></i>
-                Add Expense
+            <button class="btn btn-danger w-100 py-3 d-flex align-items-center justify-content-center gap-2" onclick="openGlobalTransaction('expense')">
+                <i class="bi bi-dash-circle fs-5"></i>
+                <span>Add Expense</span>
             </button>
         </div>
     </div>
@@ -137,158 +137,7 @@
         </div>
     </div>
     <!-- Add Income Modal -->
-    <div class="modal fade" id="addIncomeModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title">Add Income</h5>
-                        <p class="text-muted mb-0" style="font-size: 14px;">Record a new income transaction</p>
-                    </div>
-                    <button type="button" class="btn-close" onclick="hideModal('addIncomeModal')"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="incomeForm">
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input type="text" class="form-control" id="incomeTitle" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="incomeAmount" step="0.01" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Date</label>
-                            <input type="date" class="form-control" id="incomeDate" required value="{{ date('Y-m-d') }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" id="incomeCategory" required>
-                                <option value="" selected>Select category</option>
-                                <option value="Salary">Salary</option>
-                                <option value="Freelance">Freelance</option>
-                                <option value="Investment">Investment</option>
-                                <option value="Business">Business</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description (Optional)</label>
-                            <textarea class="form-control" id="incomeDescription" rows="2"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Add Income</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Expense Modal -->
-    <div class="modal fade" id="addExpenseModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title">Add Expense</h5>
-                        <p class="text-muted mb-0" style="font-size: 14px;">Record a new expense transaction</p>
-                    </div>
-                    <button type="button" class="btn-close" onclick="hideModal('addExpenseModal')"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="expenseForm">
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input type="text" class="form-control" id="expenseTitle" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="expenseAmount" step="0.01" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Date</label>
-                            <input type="date" class="form-control" id="expenseDate" required value="{{ date('Y-m-d') }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" id="expenseCategory" required>
-                                <option value="" selected>Select category</option>
-                                <option value="Food">Food</option>
-                                <option value="Transportation">Transportation</option>
-                                <option value="Shopping">Shopping</option>
-                                <option value="Bills">Bills</option>
-                                <option value="Entertainment">Entertainment</option>
-                                <option value="Healthcare">Healthcare</option>
-                                <option value="Education">Education</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description (Optional)</label>
-                            <textarea class="form-control" id="expenseDescription" rows="2"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Add Expense</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Add Budget Modal -->
-    <div class="modal fade" id="addBudgetModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Set Budget</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="budgetForm">
-                        <div class="mb-3">
-                            <label for="budgetCategory" class="form-label">Category</label>
-                            <select class="form-select" id="budgetCategory" required>
-                                <option value="Food">Food</option>
-                                <option value="Transportation">Transportation</option>
-                                <option value="Shopping">Shopping</option>
-                                <option value="Bills">Bills</option>
-                                <option value="Entertainment">Entertainment</option>
-                                <option value="Healthcare">Healthcare</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label for="budgetAmount" class="form-label">Budget Amount</label>
-                            <input type="number" class="form-control" id="budgetAmount" step="0.01" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="budgetPeriod" class="form-label">Period</label>
-                            <select class="form-select" id="budgetPeriod" required>
-                                <option value="monthly">Monthly</option>
-                                <option value="weekly">Weekly</option>
-                                <option value="yearly">Yearly</option>
-                            </select>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary" onclick="addBudget()">Set Budget</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="toast" class="toast" role="alert">
-            <div class="toast-header">
-                <strong class="me-auto">FinanceTracker</strong>
-                <button type="button" class="btn-close" onclick="hideToast()"></button>
-            </div>
-            <div class="toast-body" id="toastBody">
-                <!-- Toast message will be inserted here -->
-            </div>
-        </div>
-    </div>
+    <!-- Transaction Modals and Toast now in global layout -->
 @endsection
 
 @push('scripts')

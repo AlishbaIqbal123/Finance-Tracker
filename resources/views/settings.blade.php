@@ -76,11 +76,11 @@
                 localStorage.setItem('preferredCurrency', currency);
                 
                 // Show success toast
-                const toast = document.getElementById('toast');
-                const toastBody = toast.querySelector('.toast-body');
-                toastBody.textContent = 'Currency preference saved successfully!';
-                const bsToast = new bootstrap.Toast(toast);
-                bsToast.show();
+                if (typeof showToast === 'function') {
+                    showToast('Currency preference saved successfully!', 'success');
+                } else {
+                    alert('Currency preference saved successfully!');
+                }
                 
                 // Reload after delay to apply changes
                 setTimeout(() => window.location.reload(), 1000);

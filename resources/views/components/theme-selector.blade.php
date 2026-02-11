@@ -1,6 +1,6 @@
 <!-- Theme Selector Component -->
 <div class="theme-selector mb-3">
-    <label class="text-muted small mb-1">Theme</label>
+    <label class="small mb-1" style="color: var(--text-secondary);">Theme</label>
     <select class="form-select form-select-sm" id="themeSelector">
         <option value="light">Light Theme</option>
         <option value="dark">Dark Theme</option>

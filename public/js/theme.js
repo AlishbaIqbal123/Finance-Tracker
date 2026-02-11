@@ -1,152 +1,206 @@
 /**
  * Theme Manager for FinanceTracker
- * Handles theme switching and persistence
+ * Consistent theme application across the app
  */
 
 const themes = {
     light: {
-        '--bg-body': 'linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)',
-        '--bg-sidebar': '#ffffff',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#f8f9fa',
-        '--text-primary': '#1a202c',
-        '--text-secondary': '#718096',
-        '--border-color': '#e2e8f0',
-        '--primary-color': '#319795',
-        '--primary-hover': '#2c7a7b',
-        '--accent-color': '#319795',
-        '--sidebar-active-bg': '#e6fffa',
-        '--sidebar-active-text': '#285e61'
+        name: 'Light Theme',
+        colors: {
+            'primary': '#d63384',
+            'secondary': '#a8b5c8',
+            'success': '#a8d5ba',
+            'danger': '#f5a5a5',
+            'warning': '#f5c99b',
+            'background': '#faf9f7',
+            'card-background': '#ffffff',
+            'text-color': '#2d3748',
+            'text-secondary': '#64748b',
+            'border-color': '#e9ecef',
+            'sidebar-background': '#ffffff'
+        }
     },
     dark: {
-        '--bg-body': 'linear-gradient(135deg, #2d3748 0%, #1a202c 100%)',
-        '--bg-sidebar': '#2d3748',
-        '--bg-card': '#2d3748',
-        '--bg-secondary': '#1a202c',
-        '--text-primary': '#f7fafc',
-        '--text-secondary': '#a0aec0',
-        '--border-color': '#4a5568',
-        '--primary-color': '#4fd1c5',
-        '--primary-hover': '#38b2ac',
-        '--accent-color': '#4fd1c5',
-        '--sidebar-active-bg': '#4a5568',
-        '--sidebar-active-text': '#81e6d9'
+        name: 'Dark Theme',
+        colors: {
+            'primary': '#c95a8c',
+            'secondary': '#7d92b4',
+            'success': '#10b981',
+            'danger': '#ef4444',
+            'warning': '#f59e0b',
+            'background': '#1a1d21',
+            'card-background': '#252930',
+            'text-color': '#e2e8f0',
+            'text-secondary': '#a0aec0',
+            'border-color': '#374151',
+            'sidebar-background': '#252930'
+        }
     },
     rose: {
-        '--bg-body': 'linear-gradient(135deg, #fff0f3 0%, #fff5f7 100%)',
-        '--bg-sidebar': '#ffffff',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#fff5f7',
-        '--text-primary': '#702459',
-        '--text-secondary': '#975a16',
-        '--border-color': '#fed7e2',
-        '--primary-color': '#d53f8c',
-        '--primary-hover': '#b83280',
-        '--accent-color': '#d53f8c',
-        '--sidebar-active-bg': '#fff5f7',
-        '--sidebar-active-text': '#97266d'
+        name: 'Rose Theme',
+        colors: {
+            'primary': '#f8ccd5',
+            'secondary': '#c5a8b8',
+            'success': '#b8eacb',
+            'danger': '#f8c5c5',
+            'warning': '#fce5c5',
+            'background': '#fdf6f8',
+            'card-background': '#ffffff',
+            'text-color': '#5a4a4f',
+            'text-secondary': '#975a16',
+            'border-color': '#f0d6dd',
+            'sidebar-background': '#ffffff'
+        }
     },
     ocean: {
-        '--bg-body': 'linear-gradient(135deg, #ebf8ff 0%, #e6fffa 100%)',
-        '--bg-sidebar': '#ffffff',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#ebf8ff',
-        '--text-primary': '#2c5282',
-        '--text-secondary': '#4a5568',
-        '--border-color': '#bee3f8',
-        '--primary-color': '#3182ce',
-        '--primary-hover': '#2b6cb0',
-        '--accent-color': '#3182ce',
-        '--sidebar-active-bg': '#ebf8ff',
-        '--sidebar-active-text': '#2c5282'
+        name: 'Ocean Theme',
+        colors: {
+            'primary': '#87c5d6',
+            'secondary': '#a8c8d5',
+            'success': '#a8d6c5',
+            'danger': '#f5a5a5',
+            'warning': '#f5c99b',
+            'background': '#f0f8fa',
+            'card-background': '#ffffff',
+            'text-color': '#2d4a5a',
+            'text-secondary': '#4a5568',
+            'border-color': '#d6e5ed',
+            'sidebar-background': '#ffffff'
+        }
     },
     forest: {
-        '--bg-body': 'linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%)',
-        '--bg-sidebar': '#ffffff',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#f0fff4',
-        '--text-primary': '#22543d',
-        '--text-secondary': '#4a5568',
-        '--border-color': '#c6f6d5',
-        '--primary-color': '#38a169',
-        '--primary-hover': '#2f855a',
-        '--accent-color': '#38a169',
-        '--sidebar-active-bg': '#f0fff4',
-        '--sidebar-active-text': '#22543d'
+        name: 'Forest Theme',
+        colors: {
+            'primary': '#8bc58b',
+            'secondary': '#a8c5a8',
+            'success': '#a8d5ba',
+            'danger': '#f5a5a5',
+            'warning': '#f5c99b',
+            'background': '#f5faf5',
+            'card-background': '#ffffff',
+            'text-color': '#2d5a2d',
+            'text-secondary': '#4a5568',
+            'border-color': '#d6edd6',
+            'sidebar-background': '#ffffff'
+        }
     },
     sunset: {
-        '--bg-body': 'linear-gradient(135deg, #fffaf0 0%, #feebc8 100%)',
-        '--bg-sidebar': '#ffffff',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#fffaf0',
-        '--text-primary': '#744210',
-        '--text-secondary': '#4a5568',
-        '--border-color': '#feebc8',
-        '--primary-color': '#dd6b20',
-        '--primary-hover': '#c05621',
-        '--accent-color': '#dd6b20',
-        '--sidebar-active-bg': '#fffaf0',
-        '--sidebar-active-text': '#744210'
+        name: 'Sunset Theme',
+        colors: {
+            'primary': '#f8c587',
+            'secondary': '#d5c5a8',
+            'success': '#a8d5ba',
+            'danger': '#f5a5a5',
+            'warning': '#f5c99b',
+            'background': '#fdf8f5',
+            'card-background': '#ffffff',
+            'text-color': '#5a4a2d',
+            'text-secondary': '#4a5568',
+            'border-color': '#f0ddd6',
+            'sidebar-background': '#ffffff'
+        }
     },
     lavender: {
-        '--bg-body': 'linear-gradient(135deg, #faf5ff 0%, #e9d8fd 100%)',
-        '--bg-sidebar': '#ffffff',
-        '--bg-card': '#ffffff',
-        '--bg-secondary': '#faf5ff',
-        '--text-primary': '#553c9a',
-        '--text-secondary': '#4a5568',
-        '--border-color': '#e9d8fd',
-        '--primary-color': '#805ad5',
-        '--primary-hover': '#6b46c1',
-        '--accent-color': '#805ad5',
-        '--sidebar-active-bg': '#faf5ff',
-        '--sidebar-active-text': '#553c9a'
+        name: 'Lavender Theme',
+        colors: {
+            'primary': '#c587f8',
+            'secondary': '#c5a8d5',
+            'success': '#a8d5ba',
+            'danger': '#f5a5a5',
+            'warning': '#f5c99b',
+            'background': '#f8f5fd',
+            'card-background': '#ffffff',
+            'text-color': '#4a2d5a',
+            'text-secondary': '#4a5568',
+            'border-color': '#ddd6f0',
+            'sidebar-background': '#ffffff'
+        }
     }
 };
+
+const THEME_STORAGE_KEY = 'financeTracker_theme';
 
 function applyTheme(themeName) {
     const theme = themes[themeName] || themes.light;
     const root = document.documentElement;
 
-    // Apply all variables
-    Object.keys(theme).forEach(property => {
-        root.style.setProperty(property, theme[property]);
+    // Apply CSS variables
+    Object.entries(theme.colors).forEach(([key, value]) => {
+        root.style.setProperty(`--${key}`, value);
     });
 
-    // Set active class on body for specific overrides if needed
-    document.body.className = document.body.className.replace(/theme-\w+/g, '').trim();
-    document.body.classList.add(`theme-${themeName}`);
+    // Handle Body Classes
+    Object.keys(themes).forEach(t => {
+        document.body.classList.remove(`${t}-theme`);
+    });
+    document.body.classList.add(`${themeName}-theme`);
 
-    // Save to local storage
-    localStorage.setItem('financeTracker_theme', themeName);
+    // Set data-theme for CSS selectors
+    if (themeName === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+    } else {
+        document.documentElement.removeAttribute('data-theme');
+    }
 
-    const selector = document.getElementById('themeSelector');
-    if (selector) {
-        selector.value = themeName;
+    // Save to storage
+    localStorage.setItem(THEME_STORAGE_KEY, themeName);
+
+    // Update Theme toggle icons (moon/sun)
+    const themeIcons = document.querySelectorAll('.theme-icon');
+    themeIcons.forEach(icon => {
+        if (themeName === 'dark') {
+            icon.classList.remove('bi-moon');
+            icon.classList.add('bi-sun');
+        } else {
+            icon.classList.remove('bi-sun');
+            icon.classList.add('bi-moon');
+        }
+    });
+
+    // Sync any theme selectors on the page
+    const themeSelectors = document.querySelectorAll('#themeSelector');
+    themeSelectors.forEach(select => {
+        select.value = themeName;
+    });
+
+    console.log(`Applied: ${theme.name}`);
+}
+
+function cycleTheme() {
+    const themeNames = Object.keys(themes);
+    const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
+    const currentIndex = themeNames.indexOf(currentTheme);
+    const nextIndex = (currentIndex + 1) % themeNames.length;
+    const nextTheme = themeNames[nextIndex];
+    applyTheme(nextTheme);
+
+    // Show notification if helper exists
+    if (typeof showToast === 'function') {
+        showToast(`Theme: ${themes[nextTheme].name}`, 'info');
     }
 }
 
 function toggleTheme() {
-    const currentTheme = localStorage.getItem('financeTracker_theme') || 'light';
+    const currentTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
     const newTheme = currentTheme === 'light' ? 'dark' : 'light';
     applyTheme(newTheme);
 }
 
+// Global initialization
 document.addEventListener('DOMContentLoaded', () => {
-    // Load saved theme or default to light
-    const savedTheme = localStorage.getItem('financeTracker_theme') || 'light';
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY) || 'light';
     applyTheme(savedTheme);
 
-    // Setup listener
-    const selector = document.getElementById('themeSelector');
-    if (selector) {
-        selector.value = savedTheme;
-        selector.addEventListener('change', (e) => {
+    // Listen for manual changes on any theme selectors
+    document.addEventListener('change', (e) => {
+        if (e.target.id === 'themeSelector') {
             applyTheme(e.target.value);
-        });
-    }
+        }
+    });
 });
 
-// Expose globally
+// Expose functions globally
 window.applyTheme = applyTheme;
 window.toggleTheme = toggleTheme;
+window.cycleTheme = cycleTheme;
+window.themes = themes;

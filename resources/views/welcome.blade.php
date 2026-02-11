@@ -12,18 +12,14 @@
             </a>
             <div class="d-flex align-items-center order-lg-3 gap-2">
                 <!-- Theme Toggle -->
-                <button class="btn btn-link text-primary rounded-circle p-2 me-2 theme-toggle-btn" onclick="toggleTheme()" title="Toggle Theme">
-                    <i class="bi bi-moon-stars-fill dark-icon"></i>
-                    <i class="bi bi-sun-fill light-icon"></i>
+                <button class="btn btn-theme-toggle rounded-circle p-2 me-2" onclick="toggleTheme()" title="Toggle Theme">
+                    <i class="bi bi-moon theme-icon"></i>
                 </button>
-                <a href="{{ route('login') }}" class="nav-link fw-medium d-none d-sm-block me-3">Sign In</a>
+                <a href="{{ route('login') }}" class="nav-link fw-medium d-none d-sm-block me-3 theme-text">Sign In</a>
                 <a class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" href="{{ route('register') }}">Join Now</a>
-                <button class="navbar-toggler ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#landingNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
             </div>
             
-            <div class="collapse navbar-collapse justify-content-center" id="landingNav">
+            <div class="collapse navbar-collapse justify-content-center d-none d-lg-flex" id="landingNav">
                 <ul class="navbar-nav align-items-center">
                     <li class="nav-item mx-2">
                         <a class="nav-link fw-medium" href="#features">Features</a>
@@ -410,26 +406,65 @@
 
 @push('styles')
 <style>
-    /* Specific overrides for Landing Page to be truly theme-aware */
+    /* Mobile-First: Prevent Horizontal Scroll */
+    html, body {
+        overflow-x: hidden !important;
+        width: 100% !important;
+        max-width: 100vw !important;
+        position: relative;
+    }
+    
+    .container,
+    .row {
+        max-width: 100% !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* Premium Landing Page - Full Theme Support */
     #landingNavbar {
-        background-color: var(--bg-card);
+        background-color: var(--card-background) !important;
         border-bottom: 1px solid var(--border-color);
+        height: auto;
+        min-height: 70px;
+        padding: 0.5rem 0;
+        width: 100%;
+        max-width: 100%;
     }
     
-    .bg-card {
-        background-color: var(--bg-card) !important;
+    #landingNavbar .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
     }
     
-    .bg-secondary {
-        background-color: var(--bg-secondary) !important;
+    .hero-section {
+        background-color: var(--background);
+        padding-top: 100px;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
     }
     
-    .text-secondary {
-        color: var(--text-secondary) !important;
+    @media (max-width: 768px) {
+        .hero-section {
+            padding-top: 80px;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .hero-content h1 {
+            font-size: 2rem !important;
+        }
+        
+        .btn-lg {
+            padding: 12px 24px !important;
+            font-size: 1rem !important;
+        }
     }
     
+    /* Text Colors */
+    .theme-text,
     .brand-text {
-        color: var(--text-primary) !important;
+        color: var(--text-color) !important;
     }
     
     .nav-link {
@@ -437,42 +472,176 @@
     }
     
     .nav-link:hover {
-        color: var(--primary-color) !important;
+        color: var(--primary) !important;
     }
     
-    .btn-card {
-        background-color: var(--bg-card);
-        color: var(--text-primary);
+    .text-gradient {
+        background: linear-gradient(135deg, var(--primary), #6366f1, #a855f7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
     }
     
-    .border {
+    /* Hero Section */
+    .hero-content h1 {
+        color: var(--text-color) !important;
+    }
+    
+    .hero-description,
+    .lead {
+        color: var(--text-secondary) !important;
+    }
+    
+    /* Cards & Backgrounds */
+    .bg-card,
+    .feature-card,
+    .how-it-works-card,
+    .testimonial-card,
+    .preview-card {
+        background-color: var(--card-background) !important;
         border-color: var(--border-color) !important;
     }
     
-    .border-bottom {
-        border-bottom: 1px solid var(--border-color) !important;
+    .bg-secondary {
+        background-color: var(--background) !important;
     }
     
+    /* Borders */
+    .border,
+    .border-bottom,
     .border-top {
-        border-top: 1px solid var(--border-color) !important;
+        border-color: var(--border-color) !important;
     }
-
-    /* Animation on scroll classes */
+    
+    /* Text Utilities */
+    .text-secondary,
+    small.text-secondary {
+        color: var(--text-secondary) !important;
+    }
+    
+    h1, h2, h3, h4, h5, h6,
+    .fw-bold {
+        color: var(--text-color) !important;
+    }
+    
+    /* Feature Icons */
+    .bg-primary-soft {
+        background-color: var(--primary-light) !important;
+        color: var(--primary) !important;
+    }
+    
+    .bg-success-soft,
+    .bg-green-soft {
+        background-color: rgba(16, 185, 129, 0.1) !important;
+        color: var(--success) !important;
+    }
+    
+    .bg-purple-soft {
+        background-color: rgba(139, 92, 246, 0.1) !important;
+        color: #8b5cf6 !important;
+    }
+    
+    .bg-info-soft {
+        background-color: rgba(59, 130, 246, 0.1) !important;
+        color: var(--info) !important;
+    }
+    
+    .bg-warning-soft {
+        background-color: rgba(245, 158, 11, 0.1) !important;
+        color: var(--warning) !important;
+    }
+    
+    .bg-danger-soft {
+        background-color: rgba(239, 68, 68, 0.1) !important;
+        color: var(--danger) !important;
+    }
+    
+    /* Dashboard Preview */
+    .preview-card .card-header {
+        background-color: var(--card-background) !important;
+        border-bottom-color: var(--border-color) !important;
+    }
+    
+    .preview-card .card-body {
+        background-color: var(--background) !important;
+    }
+    
+    .preview-card .bg-card {
+        background-color: var(--card-background) !important;
+    }
+    
+    .preview-card small,
+    .preview-card .small {
+        color: var(--text-secondary) !important;
+    }
+    
+    .preview-card h4 {
+        color: var(--text-color) !important;
+    }
+    
+    /* Buttons */
+    .btn-card {
+        background-color: var(--card-background) !important;
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
+    }
+    
+    .btn-outline-primary {
+        color: var(--primary) !important;
+        border-color: var(--primary) !important;
+        background-color: transparent !important;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: var(--primary) !important;
+        color: white !important;
+    }
+    
+    /* Animations */
     .hover-up {
         transition: all 0.3s ease;
     }
     
     .hover-up:hover {
         transform: translateY(-8px);
-        box-shadow: var(--shadow-lg) !important;
-        border-color: var(--primary-color) !important;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1) !important;
     }
-
-    /* Theme icon visibility */
-    .theme-dark .dark-icon { display: none; }
-    .theme-dark .light-icon { display: inline-block; }
     
-    body:not(.theme-dark) .light-icon { display: none; }
-    body:not(.theme-dark) .dark-icon { display: inline-block; }
+    /* Footer */
+    footer {
+        background-color: var(--card-background) !important;
+        border-top-color: var(--border-color) !important;
+    }
+    
+    footer h6 {
+        color: var(--text-color) !important;
+    }
+    
+    footer a {
+        color: var(--text-secondary) !important;
+    }
+    
+    footer a:hover {
+        color: var(--primary) !important;
+    }
+    
+    /* CTA Section */
+    .cta-section h2 {
+        color: var(--text-color) !important;
+    }
+    
+    /* Progress Bars */
+    .progress {
+        background-color: var(--border-color) !important;
+    }
+    
+    /* Navbar Toggler */
+    .navbar-toggler {
+        border-color: var(--border-color) !important;
+    }
+    
+    .navbar-toggler-icon {
+        filter: var(--text-color);
+    }
 </style>
 @endpush

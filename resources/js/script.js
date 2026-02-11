@@ -2,7 +2,6 @@
 
 // Import utility functions
 import { formatCurrency, getCurrentCurrency, formatDate } from './utils.js';
-import { initializeThemeSelector } from './theme.js';
 // Data storage - using sessionStorage to persist across pages (resets when browser closes)
 let transactions = [];
 let budgets = [];
@@ -451,6 +450,19 @@ function showModal(modalId) {
         console.error('Modal not found:', modalId);
     }
 }
+
+// Global helper for opening transaction modal with specific type
+function openGlobalTransaction(type) {
+    const typeSelect = document.getElementById('transactionType');
+    if (typeSelect) {
+        typeSelect.value = type;
+    }
+    showModal('addTransactionModal');
+}
+
+// Make globally accessible
+window.openGlobalTransaction = openGlobalTransaction;
+window.showModal = showModal;
 
 // Hide modal (custom implementation without Bootstrap JS)
 function hideModal(modalOrId) {

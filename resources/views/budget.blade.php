@@ -186,19 +186,6 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="toast" class="toast" role="alert">
-            <div class="toast-header">
-                <strong class="me-auto">FinanceTracker</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body" id="toastBody">
-                <!-- Toast message will be inserted here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Custom JavaScript -->
     <script src="{{ asset('js/utils.js') }}"></script>
     <script src="{{ asset('js/budget.js') }}"></script>

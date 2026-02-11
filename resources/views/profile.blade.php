@@ -78,19 +78,6 @@
         </div>
     </div>
 
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="toast" class="toast" role="alert">
-            <div class="toast-header">
-                <strong class="me-auto">FinanceTracker</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body" id="toastBody">
-                <!-- Toast message will be inserted here -->
-            </div>
-        </div>
-    </div>
-
     <!-- Custom JavaScript -->
     <script src="{{ asset('js/script.js') }}"></script>
     
@@ -251,25 +238,7 @@
                 }
             }
         }        
-        function showToast(message, type = 'info') {
-            const toast = document.getElementById('toast');
-            const toastBody = document.getElementById('toastBody');
-            
-            if (!toast || !toastBody) return;
-            
-            toastBody.textContent = message;
-            toast.className = `toast ${type === 'error' ? 'bg-danger text-white' : type === 'success' ? 'bg-success text-white' : 'bg-info text-white'}`;
-            
-            // Simple show/hide without Bootstrap JS
-            toast.style.display = 'block';
-            toast.classList.add('show');
-            
-            // Auto hide after 3 seconds
-            setTimeout(() => {
-                toast.style.display = 'none';
-                toast.classList.remove('show');
-            }, 3000);
-        }
+
     </script>
     
     <!-- Custom JavaScript -->

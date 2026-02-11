@@ -35,26 +35,26 @@
             
             @unless(request()->is('/') || request()->is('welcome') || request()->is('login') || request()->is('register'))
             <!-- Dashboard Header -->
-            <nav class="navbar navbar-expand bg-white border-bottom py-2 py-md-3 mb-4 sticky-top">
+            <nav class="navbar navbar-expand py-2 py-md-3 mb-4 sticky-top">
                 <div class="container-fluid px-2 px-md-4">
                     <div class="d-flex align-items-center flex-grow-1 flex-md-grow-0">
-                        <!-- Integrated Mobile Toggle -->
-                        <button class="mobile-menu-btn me-3" id="mobileMenuBtn">
-                            <i class="bi bi-list"></i>
+                        <!-- Hamburger Menu for Tablet/Medium Screens -->
+                        <button class="btn btn-link text-decoration-none p-0 me-3 d-lg-none" id="sidebarToggle" type="button">
+                            <i class="bi bi-list fs-3" style="color: var(--text-color);"></i>
                         </button>
                         <h4 class="mb-0 fw-bold fs-5 fs-md-4">@yield('page_title', 'Overview')</h4>
                     </div>
                     
                     <div class="d-flex align-items-center gap-2 gap-md-3">
                          <!-- Theme Toggle -->
-                         <button class="btn btn-light rounded-circle p-2" onclick="toggleTheme()" title="Toggle Theme">
-                             <i class="bi bi-moon"></i>
+                         <button class="btn btn-theme-toggle rounded-circle p-2" onclick="toggleTheme()" title="Toggle Theme">
+                             <i class="bi bi-moon theme-icon"></i>
                          </button>
                          
                          <!-- User Profile Dropdown -->
                          <div class="dropdown">
-                            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle text-dark" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-0 me-sm-2" style="width: 36px; height: 36px;">
+                            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle theme-text" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center me-0 me-sm-2" style="width: 36px; height: 36px; background: var(--primary);">
                                     <i class="bi bi-person-fill fs-5"></i>
                                 </div>
                                 <span class="d-none d-sm-inline fw-semibold" id="headerUserName">User</span>
@@ -96,14 +96,24 @@
             <i class="bi bi-receipt{{ request()->is('transactions*') ? '-cutoff' : '' }}"></i>
             <span>Trans</span>
         </a>
-        <div class="bottom-nav-spacer"></div>
         <a href="{{ url('/budget') }}" class="bottom-nav-item {{ request()->is('budget*') ? 'active' : '' }}">
             <i class="bi bi-piggy-bank{{ request()->is('budget*') ? '-fill' : '' }}"></i>
             <span>Budget</span>
         </a>
-        <a href="{{ url('/settings') }}" class="bottom-nav-item {{ request()->is('settings*') ? 'active' : '' }}">
-            <i class="bi bi-gear{{ request()->is('settings*') ? '-fill' : '' }}"></i>
-            <span>Settings</span>
+        
+        <div class="bottom-nav-spacer"></div>
+        
+        <a href="{{ url('/analytics') }}" class="bottom-nav-item {{ request()->is('analytics*') ? 'active' : '' }}">
+            <i class="bi bi-bar-chart{{ request()->is('analytics*') ? '-fill' : '' }}"></i>
+            <span>Charts</span>
+        </a>
+        <a href="{{ url('/profile') }}" class="bottom-nav-item {{ request()->is('profile*') ? 'active' : '' }}">
+            <i class="bi bi-person{{ request()->is('profile*') ? '-badge-fill' : '' }}"></i>
+            <span>Profile</span>
+        </a>
+        <a href="javascript:void(0)" class="bottom-nav-item" onclick="cycleTheme()">
+            <i class="bi bi-palette"></i>
+            <span>Theme</span>
         </a>
     </nav>
     @endunless
@@ -169,7 +179,7 @@
                 <strong class="me-auto">Notification</strong>
                 <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
             </div>
-            <div class="toast-body"></div>
+            <div class="toast-body" id="toastBody"></div>
         </div>
     </div>
 
@@ -215,6 +225,52 @@
                 localStorage.removeItem('financeTracker_profile');
             });
         }
+        
+        // Sidebar Toggle for Tablet/Medium Screens
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.querySelector('.sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebarToggle && sidebar) {
+                // Toggle sidebar on button click
+                sidebarToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.toggle('active');
+                    }
+                    // Prevent body scroll when sidebar is open
+                    if (sidebar.classList.contains('active')) {
+                        document.body.style.overflow = 'hidden';
+                    } else {
+                        document.body.style.overflow = '';
+                    }
+                });
+                
+                // Close sidebar when clicking overlay
+                if (sidebarOverlay) {
+                    sidebarOverlay.addEventListener('click', function() {
+                        sidebar.classList.remove('active');
+                        sidebarOverlay.classList.remove('active');
+                        document.body.style.overflow = '';
+                    });
+                }
+                
+                // Close sidebar when clicking any navigation link (on tablet/mobile)
+                const sidebarLinks = sidebar.querySelectorAll('.sidebar-nav-link');
+                sidebarLinks.forEach(link => {
+                    link.addEventListener('click', function() {
+                        if (window.innerWidth < 1024) {
+                            sidebar.classList.remove('active');
+                            if (sidebarOverlay) {
+                                sidebarOverlay.classList.remove('active');
+                            }
+                            document.body.style.overflow = '';
+                        }
+                    });
+                });
+            }
+        });
     </script>
     @stack('scripts')
 </body>

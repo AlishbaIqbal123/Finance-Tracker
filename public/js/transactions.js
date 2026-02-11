@@ -1,97 +1,123 @@
-// Transactions Page Specific Logic
+import { formatCurrency, formatDate } from './utils.js';
+import { store } from './store.js';
 
-let currentPage = 1;
-const itemsPerPage = 10;
 let filteredTransactions = [];
+let currentPage = 1;
+const transactionsPerPage = 10;
 
+// Initialize transactions page
 document.addEventListener('DOMContentLoaded', function () {
-    // Initialize
-    loadTransactions();
-    populateCategoryFilter();
+    if (window.location.pathname.includes('transactions')) {
+        initializeTransactionsPage();
+    }
 });
 
-function loadTransactions() {
-    if (window.transactions) {
-        filteredTransactions = [...window.transactions];
+async function initializeTransactionsPage() {
+    try {
+        // Subscribe to store changes
+        store.subscribe((state) => {
+            transactions = state.transactions;
+            populateCategoryFilter();
+            applyFilters();
+        });
+
+        // Load initial data
+        await store.loadFromAPI();
+        transactions = store.state.transactions;
+
+        setupTransactionFilters();
+        populateCategoryFilter();
         renderTransactionsTable();
-        renderPagination();
-    } else {
-        // Retry if global data isn't ready
-        setTimeout(loadTransactions, 100);
+        setupTransactionSearch();
+    } catch (error) {
+        console.error('Failed to load transactions:', error);
+        showToast('Failed to load transactions', 'error');
+    }
+}
+
+function setupTransactionFilters() {
+    const typeFilter = document.getElementById('typeFilter');
+    const categoryFilter = document.getElementById('categoryFilter');
+    const monthFilter = document.getElementById('monthFilter');
+    const amountFilter = document.getElementById('amountFilter');
+
+    if (typeFilter) typeFilter.addEventListener('change', applyFilters);
+    if (categoryFilter) categoryFilter.addEventListener('change', applyFilters);
+    if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+    if (amountFilter) amountFilter.addEventListener('change', applyFilters);
+
+    // Set default month to current month
+    if (monthFilter) {
+        monthFilter.value = new Date().toISOString().slice(0, 7);
     }
 }
 
 function populateCategoryFilter() {
-    const filterSelect = document.getElementById('categoryFilter');
-    const editCategorySelect = document.getElementById('editCategory');
-    if (!filterSelect) return;
+    const categoryFilter = document.getElementById('categoryFilter');
+    if (!categoryFilter) return;
 
-    // Get unique categories from transactions
-    const categories = new Set();
-    if (window.transactions) {
-        window.transactions.forEach(t => categories.add(t.category));
-    }
-    // Also include default budgets categories if present
-    if (window.budgets) {
-        window.budgets.forEach(b => categories.add(b.category));
-    }
+    const categories = [...new Set(transactions.map(t => t.category))].sort();
 
-    // Default categories
-    ['Food', 'Shopping', 'Bills', 'Salary', 'Entertainment', 'Healthcare', 'Education', 'Other'].forEach(c => categories.add(c));
-
-    // Populate filter
-    filterSelect.innerHTML = '<option value="">All Categories</option>';
-    categories.forEach(cat => {
-        filterSelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+    categoryFilter.innerHTML = '<option value="">All Categories</option>';
+    categories.forEach(category => {
+        const option = document.createElement('option');
+        option.value = category;
+        option.textContent = category;
+        categoryFilter.appendChild(option);
     });
+}
 
-    // Populate edit category
-    if (editCategorySelect) {
-        editCategorySelect.innerHTML = '<option value="" disabled>Select Category</option>';
-        categories.forEach(cat => {
-            editCategorySelect.innerHTML += `<option value="${cat}">${cat}</option>`;
+function setupTransactionSearch() {
+    const searchInput = document.getElementById('transactionSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            applyFilters(searchTerm);
         });
     }
 }
 
-function applyFilters() {
-    const searchTerm = document.getElementById('transactionSearch').value.toLowerCase();
-    const type = document.getElementById('typeFilter').value;
-    const category = document.getElementById('categoryFilter').value;
-    const month = document.getElementById('monthFilter').value; // yyyy-mm
-    const amountRange = document.getElementById('amountFilter').value;
+function applyFilters(searchTerm = '') {
+    const typeFilter = document.getElementById('typeFilter')?.value || '';
+    const categoryFilter = document.getElementById('categoryFilter')?.value || '';
+    const monthFilter = document.getElementById('monthFilter')?.value || '';
+    const amountFilter = document.getElementById('amountFilter')?.value || '';
+    const searchInput = document.getElementById('transactionSearch');
+    const actualSearchTerm = searchTerm || (searchInput ? searchInput.value.toLowerCase() : '');
 
-    const transactionsToFilter = window.transactions || [];
+    filteredTransactions = transactions.filter(transaction => {
+        // Type filter
+        if (typeFilter && transaction.type !== typeFilter) return false;
 
-    filteredTransactions = transactionsToFilter.filter(t => {
-        if (!t) return false;
+        // Category filter
+        if (categoryFilter && transaction.category !== categoryFilter) return false;
 
-        // Text Match - handle potential nulls
-        const searchInput = searchTerm || '';
-        const titleStr = (t.title || '').toLowerCase();
-        const descStr = (t.description || '').toLowerCase();
-        const catStr = (t.category || '').toLowerCase();
+        // Month filter
+        if (monthFilter && transaction.date.slice(0, 7) !== monthFilter) return false;
 
-        if (searchInput && !titleStr.includes(searchInput) && !descStr.includes(searchInput) && !catStr.includes(searchInput)) {
-            return false;
+        // Amount filter
+        if (amountFilter) {
+            const amount = transaction.amount;
+            switch (amountFilter) {
+                case '0-50':
+                    if (amount > 50) return false;
+                    break;
+                case '50-100':
+                    if (amount <= 50 || amount > 100) return false;
+                    break;
+                case '100-500':
+                    if (amount <= 100 || amount > 500) return false;
+                    break;
+                case '500+':
+                    if (amount <= 500) return false;
+                    break;
+            }
         }
 
-        // Type Match
-        if (type && t.type !== type) return false;
-
-        // Category Match
-        if (category && t.category !== category) return false;
-
-        // Month Match
-        if (month && t.date && !t.date.startsWith(month)) return false;
-
-        // Amount Match
-        if (amountRange) {
-            const amt = Number(t.amount);
-            if (amountRange === '0-50' && (amt < 0 || amt > 50)) return false;
-            if (amountRange === '50-100' && (amt <= 50 || amt > 100)) return false;
-            if (amountRange === '100-500' && (amt <= 100 || amt > 500)) return false;
-            if (amountRange === '500+' && amt <= 500) return false;
+        // Search filter
+        if (actualSearchTerm) {
+            const searchableText = `${transaction.title} ${transaction.description} ${transaction.category}`.toLowerCase();
+            if (!searchableText.includes(actualSearchTerm)) return false;
         }
 
         return true;
@@ -106,181 +132,284 @@ function renderTransactionsTable() {
     const tbody = document.getElementById('transactionsTableBody');
     if (!tbody) return;
 
-    // Sort by date desc
-    filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Use filtered transactions or all transactions
+    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
+        filteredTransactions : transactions;
 
-    const start = (currentPage - 1) * itemsPerPage;
-    const end = start + itemsPerPage;
-    const pageItems = filteredTransactions.slice(start, end);
-
-    if (pageItems.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="text-center py-4 text-muted">No transactions found</td></tr>';
+    if (transactionsToShow.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="text-center py-4">
+                    <div class="empty-state">
+                        <i class="bi bi-receipt fs-1 text-muted"></i>
+                        <h5 class="mt-2">No transactions found</h5>
+                        <p class="text-muted">Try adjusting your filters or add your first transaction</p>
+                    </div>
+                </td>
+            </tr>
+        `;
         return;
     }
 
-    tbody.innerHTML = pageItems.map(t => `
-        <tr class="align-middle hover-bg">
-            <td class="text-nowrap text-muted small">${formatDate(t.date)}</td>
+    // Pagination
+    const startIndex = (currentPage - 1) * transactionsPerPage;
+    const endIndex = startIndex + transactionsPerPage;
+    const paginatedTransactions = transactionsToShow.slice(startIndex, endIndex);
+
+    tbody.innerHTML = paginatedTransactions.map(transaction => `
+        <tr>
+            <td>${formatDate(transaction.date)}</td>
             <td>
-                <div class="fw-bold text-dark">${t.title || 'Untitled Transaction'}</div>
-                <div class="small text-muted d-block d-md-none">${t.category}</div>
+                <div class="fw-medium">${transaction.title}</div>
             </td>
             <td class="d-none d-md-table-cell">
-                <span class="badge rounded-pill bg-light text-dark border fw-normal px-3 py-2">
-                    ${t.category}
-                </span>
+                <span class="badge bg-secondary-soft">${transaction.category}</span>
             </td>
             <td>
-                <span class="badge rounded-pill ${t.type === 'income' ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'} px-3 py-2">
-                    ${t.type.charAt(0).toUpperCase() + t.type.slice(1)}
+                <span class="badge ${transaction.type === 'income' ? 'bg-success-soft' : 'bg-danger-soft'}">
+                    ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </span>
             </td>
-            <td class="text-end fw-bold ${t.type === 'income' ? 'text-success' : 'text-danger'}" style="font-family: monospace; font-size: 1.1em;">
-                ${t.type === 'income' ? '+' : '-'}${formatMoney(t.amount)}
-            </td>
             <td class="text-end">
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-light text-primary border-0 rounded-circle p-2 mx-1" onclick="openEditModal('${t.id}')" title="Edit">
-                        <i class="bi bi-pencil-fill"></i>
+                <span class="fw-bold ${transaction.type === 'income' ? 'text-success' : 'text-danger'}">
+                    ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                </span>
+            </td>
+            <td class="text-center">
+                <div class="btn-group btn-group-sm">
+                    <button class="btn btn-outline-primary" onclick="editTransaction(${transaction.id})" title="Edit">
+                        <i class="bi bi-pencil"></i>
                     </button>
-                    <button class="btn btn-sm btn-light text-danger border-0 rounded-circle p-2 mx-1" onclick="deleteTransaction('${t.id}')" title="Delete">
-                        <i class="bi bi-trash-fill"></i>
+                    <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})" title="Delete">
+                        <i class="bi bi-trash"></i>
                     </button>
                 </div>
             </td>
         </tr>
     `).join('');
+
+    renderPagination();
 }
 
 function renderPagination() {
     const pagination = document.getElementById('transactionsPagination');
     if (!pagination) return;
 
-    const totalPages = Math.ceil(filteredTransactions.length / itemsPerPage);
+    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
+        filteredTransactions : transactions;
 
-    let html = '';
+    const totalPages = Math.ceil(transactionsToShow.length / transactionsPerPage);
 
-    // Prev
-    html += `
+    if (totalPages <= 1) {
+        pagination.innerHTML = '';
+        return;
+    }
+
+    let paginationHTML = '';
+
+    // Previous button
+    paginationHTML += `
         <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
         </li>
     `;
 
-    // Numbers
+    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
-        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
-            html += `
-                <li class="page-item ${currentPage === i ? 'active' : ''}">
+        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+            paginationHTML += `
+                <li class="page-item ${i === currentPage ? 'active' : ''}">
                     <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
                 </li>
             `;
-        } else if (i === currentPage - 2 || i === currentPage + 2) {
-            html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+        } else if (i === currentPage - 3 || i === currentPage + 3) {
+            paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
         }
     }
 
-    // Next
-    html += `
-        <li class="page-item ${currentPage === totalPages || totalPages === 0 ? 'disabled' : ''}">
+    // Next button
+    paginationHTML += `
+        <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
         </li>
     `;
 
-    pagination.innerHTML = html;
+    pagination.innerHTML = paginationHTML;
 }
 
 function changePage(page) {
-    if (page < 1 || page > Math.ceil(filteredTransactions.length / itemsPerPage)) return;
+    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
+        filteredTransactions : transactions;
+    const totalPages = Math.ceil(transactionsToShow.length / transactionsPerPage);
+
+    if (page < 1 || page > totalPages) return;
+
     currentPage = page;
     renderTransactionsTable();
-    renderPagination();
 }
 
-function openEditModal(id) {
-    const t = window.transactions.find(item => String(item.id) === String(id));
-    if (!t) {
-        console.error('Transaction not found for ID:', id);
-        return;
-    }
+function hasActiveFilters() {
+    const typeFilter = document.getElementById('typeFilter')?.value || '';
+    const categoryFilter = document.getElementById('categoryFilter')?.value || '';
+    const monthFilter = document.getElementById('monthFilter')?.value || '';
+    const amountFilter = document.getElementById('amountFilter')?.value || '';
+    const searchInput = document.getElementById('transactionSearch')?.value || '';
 
-    document.getElementById('editTransactionId').value = t.id;
-    document.getElementById('editTitle').value = t.title || t.description || '';
-    document.getElementById('editAmount').value = t.amount;
-    document.getElementById('editType').value = t.type;
-    document.getElementById('editCategory').value = t.category;
-    document.getElementById('editDate').value = t.date;
-    document.getElementById('editDescription').value = t.description || '';
+    return typeFilter || categoryFilter || monthFilter || amountFilter || searchInput;
+}
 
-    const modal = new bootstrap.Modal(document.getElementById('editTransactionModal'));
-    modal.show();
+function editTransaction(id) {
+    const transaction = transactions.find(t => t.id === id);
+    if (!transaction) return;
+
+    // Populate edit form
+    document.getElementById('editTransactionId').value = transaction.id;
+    document.getElementById('editTitle').value = transaction.title;
+    document.getElementById('editAmount').value = transaction.amount;
+    document.getElementById('editType').value = transaction.type;
+    document.getElementById('editDescription').value = transaction.description;
+    document.getElementById('editCategory').value = transaction.category;
+    document.getElementById('editDate').value = transaction.date;
+
+    // Populate category dropdown based on transaction type
+    const editCategorySelect = document.getElementById('editCategory');
+    const categories = transaction.type === 'income' ?
+        ['Salary', 'Freelance', 'Investment', 'Business', 'Other'] :
+        ['Food', 'Transportation', 'Shopping', 'Bills', 'Entertainment', 'Healthcare', 'Education', 'Other'];
+
+    // Always populate the category dropdown with appropriate categories
+    editCategorySelect.innerHTML = categories.map(cat =>
+        `<option value="${cat}" ${cat === transaction.category ? 'selected' : ''}>${cat}</option>`
+    ).join('');
+
+    // Show modal using custom implementation
+    showModal('editTransactionModal');
 }
 
 async function updateTransaction() {
-    if (window.checkGuestAccess && window.checkGuestAccess()) return;
-
-    const id = document.getElementById('editTransactionId').value;
+    const id = parseInt(document.getElementById('editTransactionId').value);
     const title = document.getElementById('editTitle').value;
     const amount = parseFloat(document.getElementById('editAmount').value);
     const type = document.getElementById('editType').value;
+    const description = document.getElementById('editDescription').value;
     const category = document.getElementById('editCategory').value;
     const date = document.getElementById('editDate').value;
-    const description = document.getElementById('editDescription').value;
 
-    if (!title || isNaN(amount) || !date) {
-        showToast('Please fill in all required fields', 'error');
+    if (!title || !amount || !description || !category || !date) {
+        showToast('Please fill in all fields', 'error');
         return;
     }
 
-    const transactionData = {
-        title,
-        amount,
-        type,
-        category,
-        date,
-        description
-    };
+    try {
+        // Update transaction via store
+        const transactionData = {
+            title: title,
+            amount: amount,
+            type: type,
+            description: description,
+            category: category,
+            date: date
+        };
 
-    const index = window.transactions.findIndex(t => String(t.id) === String(id));
-    if (index !== -1) {
-        // API Call if not guest
-        if (typeof isGuest === 'function' && !isGuest()) {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            try {
-                const response = await fetch(`/api/transactions/${id}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': csrfToken
-                    },
-                    body: JSON.stringify(transactionData)
-                });
+        await store.updateTransaction(id, transactionData);
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    console.error('Failed to update on server:', error);
-                    showToast('Failed to update server', 'warning');
-                }
-            } catch (err) {
-                console.error('Update API error:', err);
-            }
-        }
+        // Close modal using custom implementation
+        hideModal('editTransactionModal');
 
-        // Update local state
-        window.transactions[index] = { ...window.transactions[index], ...transactionData };
-
-        // Persist and Refresh
-        if (typeof saveData === 'function') saveData();
-        if (typeof updateAll === 'function') updateAll();
-
-        // Hide modal
-        const modalEl = document.getElementById('editTransactionModal');
-        const modal = bootstrap.Modal.getInstance(modalEl);
-        if (modal) modal.hide();
-
-        showToast('Transaction updated successfully', 'success');
-        if (typeof applyFilters === 'function') applyFilters();
+        showToast('Transaction updated successfully!', 'success');
+    } catch (error) {
+        console.error('Failed to update transaction:', error);
+        showToast('Failed to update transaction', 'error');
     }
 }
+
+function exportTransactions() {
+    const transactionsToExport = filteredTransactions.length > 0 || hasActiveFilters() ?
+        filteredTransactions : transactions;
+
+    if (transactionsToExport.length === 0) {
+        showToast('No transactions to export', 'error');
+        return;
+    }
+
+    // Create CSV content
+    const headers = ['Date', 'Title', 'Description', 'Category', 'Type', 'Amount'];
+    const csvContent = [
+        headers.join(','),
+        ...transactionsToExport.map(t => [
+            t.date,
+            `"${t.title}"`,
+            `"${t.description}"`,
+            t.category,
+            t.type,
+            t.amount
+        ].join(','))
+    ].join('\n');
+
+    // Create and download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+
+    showToast('Transactions exported successfully!', 'success');
+}
+
+// Override the global functions to refresh the transactions table
+const originalAddIncome = window.addIncome;
+const originalAddExpense = window.addExpense;
+const originalDeleteTransaction = window.deleteTransaction;
+
+window.addIncome = function () {
+    originalAddIncome();
+    setTimeout(() => {
+        populateCategoryFilter();
+        applyFilters();
+    }, 100);
+};
+
+window.addExpense = function () {
+    originalAddExpense();
+    setTimeout(() => {
+        populateCategoryFilter();
+        applyFilters();
+    }, 100);
+};
+
+window.deleteTransaction = async function (id) {
+    try {
+        await store.deleteTransaction(id);
+        populateCategoryFilter();
+        applyFilters();
+        showToast('Transaction deleted successfully!', 'success');
+    } catch (error) {
+        console.error('Failed to delete transaction:', error);
+        showToast('Failed to delete transaction', 'error');
+    }
+};
+
+// Helper function to refresh transactions from store
+async function refreshTransactions() {
+    try {
+        await store.loadFromAPI();
+        transactions = store.state.transactions;
+        renderTransactionsTable();
+        populateCategoryFilter();
+    } catch (error) {
+        console.error('Failed to refresh transactions:', error);
+        showToast('Failed to refresh transactions', 'error');
+    }
+}
+
+// Export functions for global access
+window.editTransaction = editTransaction;
+window.updateTransaction = updateTransaction;
+window.exportTransactions = exportTransactions;
+window.changePage = changePage;
+window.applyFilters = applyFilters;
+window.refreshTransactions = refreshTransactions;

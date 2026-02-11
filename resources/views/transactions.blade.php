@@ -5,39 +5,39 @@
 @section('content')
     
     <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
             <div>
                 Recent Transactions
                 <div class="text-muted" style="font-size: 12px; font-weight: normal;">Your latest income and expense records</div>
             </div>
-            <button class="btn btn-primary" onclick="showModal('addTransactionModal')">
+            <button class="btn btn-primary d-none d-md-inline-flex" onclick="showModal('addTransactionModal')">
                 <i class="bi bi-plus-circle me-1"></i>Add Transaction
             </button>
         </div>
                 
                 <!-- Filters -->
                 <div class="card-body">
-                    <div class="row mb-3">
-                        <div class="col-md-3 mb-2">
+                    <div class="row g-2 mb-3">
+                        <div class="col-12 col-md-3">
                             <input type="text" class="form-control" id="transactionSearch" placeholder="Search transactions...">
                         </div>
-                        <div class="col-md-2 mb-2">
+                        <div class="col-6 col-md-2">
                             <select class="form-select" id="typeFilter">
                                 <option value="">All Types</option>
                                 <option value="income">Income</option>
                                 <option value="expense">Expense</option>
                             </select>
                         </div>
-                        <div class="col-md-2 mb-2">
+                        <div class="col-6 col-md-2">
                             <select class="form-select" id="categoryFilter">
                                 <option value="">All Categories</option>
                                 <!-- Categories will be populated by JavaScript -->
                             </select>
                         </div>
-                        <div class="col-md-2 mb-2">
+                        <div class="col-6 col-md-2">
                             <input type="month" class="form-control" id="monthFilter" placeholder="Month">
                         </div>
-                        <div class="col-md-2 mb-2">
+                        <div class="col-6 col-md-2">
                             <select class="form-select" id="amountFilter">
                                 <option value="">All Amounts</option>
                                 <option value="0-50">$0 - $50</option>
@@ -46,7 +46,7 @@
                                 <option value="500+">$500+</option>
                             </select>
                         </div>
-                        <div class="col-md-1 mb-2">
+                        <div class="col-12 col-md-1">
                             <button class="btn btn-outline-secondary w-100" onclick="applyFilters()">
                                 <i class="bi bi-funnel"></i>
                             </button>
@@ -133,19 +133,6 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="updateTransaction()">Update Transaction</button>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-        <div id="toast" class="toast" role="alert">
-            <div class="toast-header">
-                <strong class="me-auto">FinanceTracker</strong>
-                <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-            </div>
-            <div class="toast-body" id="toastBody">
-                <!-- Toast message will be inserted here -->
             </div>
         </div>
     </div>

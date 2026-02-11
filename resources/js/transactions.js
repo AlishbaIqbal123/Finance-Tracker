@@ -6,7 +6,7 @@ let currentPage = 1;
 const transactionsPerPage = 10;
 
 // Initialize transactions page
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     if (window.location.pathname.includes('transactions')) {
         initializeTransactionsPage();
     }
@@ -20,11 +20,11 @@ async function initializeTransactionsPage() {
             populateCategoryFilter();
             applyFilters();
         });
-        
+
         // Load initial data
         await store.loadFromAPI();
         transactions = store.state.transactions;
-        
+
         setupTransactionFilters();
         populateCategoryFilter();
         renderTransactionsTable();
@@ -40,12 +40,12 @@ function setupTransactionFilters() {
     const categoryFilter = document.getElementById('categoryFilter');
     const monthFilter = document.getElementById('monthFilter');
     const amountFilter = document.getElementById('amountFilter');
-    
+
     if (typeFilter) typeFilter.addEventListener('change', applyFilters);
     if (categoryFilter) categoryFilter.addEventListener('change', applyFilters);
     if (monthFilter) monthFilter.addEventListener('change', applyFilters);
     if (amountFilter) amountFilter.addEventListener('change', applyFilters);
-    
+
     // Set default month to current month
     if (monthFilter) {
         monthFilter.value = new Date().toISOString().slice(0, 7);
@@ -55,9 +55,9 @@ function setupTransactionFilters() {
 function populateCategoryFilter() {
     const categoryFilter = document.getElementById('categoryFilter');
     if (!categoryFilter) return;
-    
+
     const categories = [...new Set(transactions.map(t => t.category))].sort();
-    
+
     categoryFilter.innerHTML = '<option value="">All Categories</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
@@ -70,7 +70,7 @@ function populateCategoryFilter() {
 function setupTransactionSearch() {
     const searchInput = document.getElementById('transactionSearch');
     if (searchInput) {
-        searchInput.addEventListener('input', function(e) {
+        searchInput.addEventListener('input', function (e) {
             const searchTerm = e.target.value.toLowerCase();
             applyFilters(searchTerm);
         });
@@ -84,17 +84,17 @@ function applyFilters(searchTerm = '') {
     const amountFilter = document.getElementById('amountFilter')?.value || '';
     const searchInput = document.getElementById('transactionSearch');
     const actualSearchTerm = searchTerm || (searchInput ? searchInput.value.toLowerCase() : '');
-    
+
     filteredTransactions = transactions.filter(transaction => {
         // Type filter
         if (typeFilter && transaction.type !== typeFilter) return false;
-        
+
         // Category filter
         if (categoryFilter && transaction.category !== categoryFilter) return false;
-        
+
         // Month filter
         if (monthFilter && transaction.date.slice(0, 7) !== monthFilter) return false;
-        
+
         // Amount filter
         if (amountFilter) {
             const amount = transaction.amount;
@@ -113,16 +113,16 @@ function applyFilters(searchTerm = '') {
                     break;
             }
         }
-        
+
         // Search filter
         if (actualSearchTerm) {
             const searchableText = `${transaction.title} ${transaction.description} ${transaction.category}`.toLowerCase();
             if (!searchableText.includes(actualSearchTerm)) return false;
         }
-        
+
         return true;
     });
-    
+
     currentPage = 1;
     renderTransactionsTable();
     renderPagination();
@@ -131,11 +131,11 @@ function applyFilters(searchTerm = '') {
 function renderTransactionsTable() {
     const tbody = document.getElementById('transactionsTableBody');
     if (!tbody) return;
-    
+
     // Use filtered transactions or all transactions
-    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ? 
+    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
         filteredTransactions : transactions;
-    
+
     if (transactionsToShow.length === 0) {
         tbody.innerHTML = `
             <tr>
@@ -150,23 +150,23 @@ function renderTransactionsTable() {
         `;
         return;
     }
-    
+
     // Pagination
     const startIndex = (currentPage - 1) * transactionsPerPage;
     const endIndex = startIndex + transactionsPerPage;
     const paginatedTransactions = transactionsToShow.slice(startIndex, endIndex);
-    
+
     tbody.innerHTML = paginatedTransactions.map(transaction => `
         <tr>
             <td>${formatDate(transaction.date)}</td>
             <td>
                 <div class="fw-medium">${transaction.title}</div>
             </td>
-            <td>
-                <span class="badge bg-light text-dark">${transaction.category}</span>
+            <td class="d-none d-md-table-cell">
+                <span class="badge bg-secondary-soft">${transaction.category}</span>
             </td>
             <td>
-                <span class="badge ${transaction.type === 'income' ? 'bg-success' : 'bg-danger'}">
+                <span class="badge ${transaction.type === 'income' ? 'bg-success-soft' : 'bg-danger-soft'}">
                     ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
                 </span>
             </td>
@@ -187,33 +187,33 @@ function renderTransactionsTable() {
             </td>
         </tr>
     `).join('');
-    
+
     renderPagination();
 }
 
 function renderPagination() {
     const pagination = document.getElementById('transactionsPagination');
     if (!pagination) return;
-    
-    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ? 
+
+    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
         filteredTransactions : transactions;
-    
+
     const totalPages = Math.ceil(transactionsToShow.length / transactionsPerPage);
-    
+
     if (totalPages <= 1) {
         pagination.innerHTML = '';
         return;
     }
-    
+
     let paginationHTML = '';
-    
+
     // Previous button
     paginationHTML += `
         <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
         </li>
     `;
-    
+
     // Page numbers
     for (let i = 1; i <= totalPages; i++) {
         if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
@@ -226,24 +226,24 @@ function renderPagination() {
             paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
         }
     }
-    
+
     // Next button
     paginationHTML += `
         <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
             <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
         </li>
     `;
-    
+
     pagination.innerHTML = paginationHTML;
 }
 
 function changePage(page) {
-    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ? 
+    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
         filteredTransactions : transactions;
     const totalPages = Math.ceil(transactionsToShow.length / transactionsPerPage);
-    
+
     if (page < 1 || page > totalPages) return;
-    
+
     currentPage = page;
     renderTransactionsTable();
 }
@@ -254,14 +254,14 @@ function hasActiveFilters() {
     const monthFilter = document.getElementById('monthFilter')?.value || '';
     const amountFilter = document.getElementById('amountFilter')?.value || '';
     const searchInput = document.getElementById('transactionSearch')?.value || '';
-    
+
     return typeFilter || categoryFilter || monthFilter || amountFilter || searchInput;
 }
 
 function editTransaction(id) {
     const transaction = transactions.find(t => t.id === id);
     if (!transaction) return;
-    
+
     // Populate edit form
     document.getElementById('editTransactionId').value = transaction.id;
     document.getElementById('editTitle').value = transaction.title;
@@ -270,18 +270,18 @@ function editTransaction(id) {
     document.getElementById('editDescription').value = transaction.description;
     document.getElementById('editCategory').value = transaction.category;
     document.getElementById('editDate').value = transaction.date;
-    
+
     // Populate category dropdown based on transaction type
     const editCategorySelect = document.getElementById('editCategory');
-    const categories = transaction.type === 'income' ? 
+    const categories = transaction.type === 'income' ?
         ['Salary', 'Freelance', 'Investment', 'Business', 'Other'] :
         ['Food', 'Transportation', 'Shopping', 'Bills', 'Entertainment', 'Healthcare', 'Education', 'Other'];
-    
+
     // Always populate the category dropdown with appropriate categories
-    editCategorySelect.innerHTML = categories.map(cat => 
+    editCategorySelect.innerHTML = categories.map(cat =>
         `<option value="${cat}" ${cat === transaction.category ? 'selected' : ''}>${cat}</option>`
     ).join('');
-    
+
     // Show modal using custom implementation
     showModal('editTransactionModal');
 }
@@ -294,12 +294,12 @@ async function updateTransaction() {
     const description = document.getElementById('editDescription').value;
     const category = document.getElementById('editCategory').value;
     const date = document.getElementById('editDate').value;
-    
+
     if (!title || !amount || !description || !category || !date) {
         showToast('Please fill in all fields', 'error');
         return;
     }
-    
+
     try {
         // Update transaction via store
         const transactionData = {
@@ -310,12 +310,12 @@ async function updateTransaction() {
             category: category,
             date: date
         };
-        
+
         await store.updateTransaction(id, transactionData);
-        
+
         // Close modal using custom implementation
         hideModal('editTransactionModal');
-        
+
         showToast('Transaction updated successfully!', 'success');
     } catch (error) {
         console.error('Failed to update transaction:', error);
@@ -324,14 +324,14 @@ async function updateTransaction() {
 }
 
 function exportTransactions() {
-    const transactionsToExport = filteredTransactions.length > 0 || hasActiveFilters() ? 
+    const transactionsToExport = filteredTransactions.length > 0 || hasActiveFilters() ?
         filteredTransactions : transactions;
-    
+
     if (transactionsToExport.length === 0) {
         showToast('No transactions to export', 'error');
         return;
     }
-    
+
     // Create CSV content
     const headers = ['Date', 'Title', 'Description', 'Category', 'Type', 'Amount'];
     const csvContent = [
@@ -345,7 +345,7 @@ function exportTransactions() {
             t.amount
         ].join(','))
     ].join('\n');
-    
+
     // Create and download file
     const blob = new Blob([csvContent], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
@@ -356,7 +356,7 @@ function exportTransactions() {
     a.click();
     document.body.removeChild(a);
     window.URL.revokeObjectURL(url);
-    
+
     showToast('Transactions exported successfully!', 'success');
 }
 
@@ -365,7 +365,7 @@ const originalAddIncome = window.addIncome;
 const originalAddExpense = window.addExpense;
 const originalDeleteTransaction = window.deleteTransaction;
 
-window.addIncome = function() {
+window.addIncome = function () {
     originalAddIncome();
     setTimeout(() => {
         populateCategoryFilter();
@@ -373,7 +373,7 @@ window.addIncome = function() {
     }, 100);
 };
 
-window.addExpense = function() {
+window.addExpense = function () {
     originalAddExpense();
     setTimeout(() => {
         populateCategoryFilter();
@@ -381,7 +381,7 @@ window.addExpense = function() {
     }, 100);
 };
 
-window.deleteTransaction = async function(id) {
+window.deleteTransaction = async function (id) {
     try {
         await store.deleteTransaction(id);
         populateCategoryFilter();
