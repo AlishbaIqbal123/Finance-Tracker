@@ -311,46 +311,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (typeof initAnalytics === 'function') {
     }
 
-    // Mobile Menu Logic
-    const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-    const sidebarOverlay = document.getElementById('sidebarOverlay');
-
-    function toggleMobileMenu() {
-        console.log('Toggling mobile menu...');
-        if (sidebar) {
-            sidebar.classList.toggle('active');
-            if (sidebarOverlay) sidebarOverlay.classList.toggle('active');
-            const isActive = sidebar.classList.contains('active');
-            document.body.style.overflow = isActive ? 'hidden' : '';
-            console.log('Mobile menu is now:', isActive ? 'active' : 'inactive');
-        } else {
-            console.warn('Sidebar element not found for mobile toggle!');
-        }
-    }
-
-    if (mobileMenuBtn) {
-        mobileMenuBtn.onclick = function (e) {
-            e.preventDefault();
-            toggleMobileMenu();
-        };
-    }
-
-    if (sidebarOverlay) {
-        sidebarOverlay.onclick = function () {
-            toggleMobileMenu();
-        };
-    }
-
-    // Close mobile menu on link click
-    const navLinks = document.querySelectorAll('.sidebar-nav-link');
-    navLinks.forEach(link => {
-        link.addEventListener('click', () => {
-            if (window.innerWidth <= 991 && sidebar && sidebar.classList.contains('active')) {
-                toggleMobileMenu();
-            }
-        });
-    });
-
     // Populate category dropdowns on load
     populateCategoryDropdowns();
 
@@ -1829,10 +1789,12 @@ function initializeMobileMenu() {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
+                document.body.style.overflow = '';
             } else {
                 sidebar.classList.add('active');
                 sidebarOverlay.classList.add('active');
                 mobileMenuBtn.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }
         });
 
@@ -1840,24 +1802,27 @@ function initializeMobileMenu() {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
             mobileMenuBtn.classList.remove('active');
+            document.body.style.overflow = '';
         });
 
         const sidebarLinks = sidebar.querySelectorAll('.sidebar-nav-link');
         sidebarLinks.forEach(link => {
             link.addEventListener('click', function () {
-                if (window.innerWidth <= 768) {
+                if (window.innerWidth <= 991) {
                     sidebar.classList.remove('active');
                     sidebarOverlay.classList.remove('active');
                     mobileMenuBtn.classList.remove('active');
+                    document.body.style.overflow = '';
                 }
             });
         });
 
         window.addEventListener('resize', function () {
-            if (window.innerWidth > 768) {
+            if (window.innerWidth > 991) {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
 
@@ -1866,6 +1831,7 @@ function initializeMobileMenu() {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
     }

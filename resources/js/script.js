@@ -16,12 +16,12 @@ async function loadFromSession() {
     try {
         // Import API module dynamically
         const { default: api } = await import('./api.js');
-        
+
         // Load transactions from API
         const transactionsResponse = await api.transactions.getAll();
         transactions = transactionsResponse.data || [];
         console.log('Loaded transactions from API:', transactions.length);
-        
+
         // For budgets, we'll keep using sessionStorage for now
         const savedBudgets = sessionStorage.getItem('financeTracker_budgets');
         if (savedBudgets) {
@@ -35,11 +35,11 @@ async function loadFromSession() {
         }
     } catch (error) {
         console.error('Error loading data from API:', error);
-        
+
         // Fallback to sessionStorage
         const savedTransactions = sessionStorage.getItem('financeTracker_transactions');
         const savedBudgets = sessionStorage.getItem('financeTracker_budgets');
-        
+
         if (savedTransactions) {
             try {
                 transactions = JSON.parse(savedTransactions);
@@ -49,7 +49,7 @@ async function loadFromSession() {
                 transactions = [];
             }
         }
-        
+
         if (savedBudgets) {
             try {
                 budgets = JSON.parse(savedBudgets);
@@ -75,14 +75,14 @@ function saveToSession() {
 }
 
 // Start app
-document.addEventListener('DOMContentLoaded', async function() {
+document.addEventListener('DOMContentLoaded', async function () {
     // Load data from session first
     await loadFromSession();
-    
+
     // For new users, start with empty data
     if (transactions.length === 0) {
         console.log('New user: Starting with empty data');
-        
+
         // Check if this is a demo user (based on URL or other indicators)
         if (window.location.pathname.includes('/dashboard') || window.location.pathname.includes('/transactions')) {
             // Add initial sample data for demo experience
@@ -91,35 +91,39 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.log('Added initial sample data for demo experience');
         }
     }
-    
+
     console.log('App started with', transactions.length, 'transactions');
     updateAll();
     setupButtons();
-    
+
     // Initialize currency selector
     initializeCurrencySelector();
-    
+
     // Initialize theme selector
-    initializeThemeSelector();});
+    initializeThemeSelector();
+
+    // Initialize mobile menu
+    initializeMobileMenu();
+});
 
 // Initialize currency selector
 function initializeCurrencySelector() {
     const currencySelector = document.getElementById('currencySelector');
     if (!currencySelector) return;
-    
+
     // Import utils to get current currency
     import('./utils.js').then(({ getCurrentCurrency, setCurrency }) => {
         // Set initial value
         const currentCurrency = getCurrentCurrency();
         currencySelector.value = currentCurrency;
-        
+
         // Add event listener
-        currencySelector.addEventListener('change', function() {
+        currencySelector.addEventListener('change', function () {
             const selectedCurrency = this.value;
             if (setCurrency(selectedCurrency)) {
                 // Update all displays
                 updateAll();
-                
+
                 // Show notification
                 import('./utils.js').then(({ showToast }) => {
                     showToast(`Currency changed to ${selectedCurrency}`, 'success');
@@ -135,7 +139,7 @@ function initializeCurrencySelector() {
 function addInitialSampleData() {
     const now = new Date();
     const currentMonth = now.toISOString().slice(0, 7);
-    
+
     const sampleTransactions = [
         // Income transactions
         {
@@ -156,7 +160,7 @@ function addInitialSampleData() {
             description: 'Client project payment',
             date: `${currentMonth}-15`
         },
-        
+
         // Expense transactions
         {
             id: Date.now() + 3,
@@ -213,7 +217,7 @@ function addInitialSampleData() {
             date: `${currentMonth}-18`
         }
     ];
-    
+
     const sampleBudgets = [
         {
             id: Date.now() + 10,
@@ -248,10 +252,10 @@ function addInitialSampleData() {
             createdAt: new Date().toISOString()
         }
     ];
-    
+
     transactions = sampleTransactions;
     budgets = sampleBudgets;
-    
+
     console.log('Sample data loaded:', transactions.length, 'transactions');
 }
 
@@ -305,7 +309,7 @@ function addSampleData() {
             date: new Date(now.getFullYear(), now.getMonth(), now.getDate() - 5).toISOString().slice(0, 10)
         }
     ];
-    
+
     const sampleBudgets = [
         {
             id: Date.now() + 10,
@@ -326,10 +330,10 @@ function addSampleData() {
             period: 'monthly'
         }
     ];
-    
+
     transactions = sampleTransactions;
     budgets = sampleBudgets;
-    
+
     console.log('Additional sample data loaded');
 }
 
@@ -337,7 +341,7 @@ function addSampleData() {
 function saveData() {
     // Save to sessionStorage so data persists across page navigations
     saveToSession();
-    
+
     // Notify analytics page of data changes
     if (typeof window.notifyAnalyticsUpdate === 'function') {
         window.notifyAnalyticsUpdate();
@@ -360,13 +364,13 @@ function setupButtons() {
     if (incomeBtn) {
         incomeBtn.onclick = () => showModal('addIncomeModal');
     }
-    
+
     // Add expense modal
     const expenseBtn = document.querySelector('[data-bs-target="#addExpenseModal"]');
     if (expenseBtn) {
         expenseBtn.onclick = () => showModal('addExpenseModal');
     }
-    
+
     // Add transaction modal (for other pages)
     const addBtn = document.querySelector('[data-bs-target="#addTransactionModal"]');
     if (addBtn) {
@@ -375,7 +379,7 @@ function setupButtons() {
             showModal('addTransactionModal');
         };
     }
-    
+
     // Add budget modal
     const budgetBtn = document.querySelector('[data-bs-target="#addBudgetModal"]');
     if (budgetBtn) {
@@ -384,44 +388,44 @@ function setupButtons() {
             showModal('addBudgetModal');
         };
     }
-    
+
     // Close modal buttons
     document.querySelectorAll('.btn-close, [data-bs-dismiss="modal"]').forEach(btn => {
         btn.onclick = () => hideModal(btn.closest('.modal'));
     });
-    
+
     // Close modal when clicking outside
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', function (e) {
         if (e.target.classList.contains('modal')) {
             hideModal(e.target);
         }
     });
-    
+
     // Form submissions
     const incomeForm = document.getElementById('incomeForm');
     if (incomeForm) {
-        incomeForm.onsubmit = function(e) {
+        incomeForm.onsubmit = function (e) {
             console.log('Income form submitted');
             addIncome(e);
         };
     }
-    
+
     const expenseForm = document.getElementById('expenseForm');
     if (expenseForm) {
-        expenseForm.onsubmit = function(e) {
+        expenseForm.onsubmit = function (e) {
             console.log('Expense form submitted');
             addExpense(e);
         };
     }
-    
+
     const transactionForm = document.getElementById('transactionForm');
     if (transactionForm) {
-        transactionForm.onsubmit = function(e) {
+        transactionForm.onsubmit = function (e) {
             console.log('Transaction form submitted');
             addTransaction(e);
         };
     }
-    
+
     const budgetForm = document.getElementById('budgetForm');
     if (budgetForm) {
         budgetForm.onsubmit = addBudget;
@@ -456,7 +460,7 @@ function hideModal(modalOrId) {
     } else {
         modal = modalOrId;
     }
-    
+
     if (modal) {
         modal.style.display = 'none';
         modal.classList.remove('show');
@@ -477,45 +481,45 @@ function hideModal(modalOrId) {
 // Add new income (dashboard)
 async function addIncome(e) {
     if (e) e.preventDefault();
-    
+
     // Check if elements exist
     const titleEl = document.getElementById('incomeTitle');
     const amountEl = document.getElementById('incomeAmount');
     const categoryEl = document.getElementById('incomeCategory');
     const descriptionEl = document.getElementById('incomeDescription');
-    
+
     if (!titleEl || !amountEl || !categoryEl) {
         console.error('Income form elements not found');
         alert('Form not ready. Please try again.');
         return;
     }
-    
+
     const title = titleEl.value;
     const amount = parseFloat(amountEl.value);
     const category = categoryEl.value;
     const description = descriptionEl ? descriptionEl.value : title;
     const date = new Date().toISOString().slice(0, 10);
-    
+
     // Validation
     if (!title || title.trim() === '') {
         alert('Please enter a title');
         return;
     }
-    
+
     if (!amount || amount <= 0) {
         alert('Please enter a valid amount');
         return;
     }
-    
+
     if (!category) {
         alert('Please select a category');
         return;
     }
-    
+
     try {
         // Import API module dynamically
         const { default: api } = await import('./api.js');
-        
+
         const transactionData = {
             title: title.trim(),
             amount: amount,
@@ -524,21 +528,21 @@ async function addIncome(e) {
             date: date,
             description: description.trim() || title.trim()
         };
-        
+
         await api.transactions.create(transactionData);
-        
+
         // Refresh transactions from API if on transactions page
         if (typeof refreshTransactions === 'function') {
             await refreshTransactions();
         }
-        
+
         updateAll();
         hideModal('addIncomeModal');
-        
+
         // Reset form safely
         const form = document.getElementById('incomeForm');
         if (form) form.reset();
-        
+
         console.log('Income added:', transactionData);
     } catch (error) {
         console.error('Failed to add income:', error);
@@ -549,45 +553,45 @@ async function addIncome(e) {
 // Add new expense (dashboard)
 async function addExpense(e) {
     if (e) e.preventDefault();
-    
+
     // Check if elements exist
     const titleEl = document.getElementById('expenseTitle');
     const amountEl = document.getElementById('expenseAmount');
     const categoryEl = document.getElementById('expenseCategory');
     const descriptionEl = document.getElementById('expenseDescription');
-    
+
     if (!titleEl || !amountEl || !categoryEl) {
         console.error('Expense form elements not found');
         alert('Form not ready. Please try again.');
         return;
     }
-    
+
     const title = titleEl.value;
     const amount = parseFloat(amountEl.value);
     const category = categoryEl.value;
     const description = descriptionEl ? descriptionEl.value : title;
     const date = new Date().toISOString().slice(0, 10);
-    
+
     // Validation
     if (!title || title.trim() === '') {
         alert('Please enter a title');
         return;
     }
-    
+
     if (!amount || amount <= 0) {
         alert('Please enter a valid amount');
         return;
     }
-    
+
     if (!category) {
         alert('Please select a category');
         return;
     }
-    
+
     try {
         // Import API module dynamically
         const { default: api } = await import('./api.js');
-        
+
         const transactionData = {
             title: title.trim(),
             amount: amount,
@@ -596,21 +600,21 @@ async function addExpense(e) {
             date: date,
             description: description.trim() || title.trim()
         };
-        
+
         await api.transactions.create(transactionData);
-        
+
         // Refresh transactions from API if on transactions page
         if (typeof refreshTransactions === 'function') {
             await refreshTransactions();
         }
-        
+
         updateAll();
         hideModal('addExpenseModal');
-        
+
         // Reset form safely
         const form = document.getElementById('expenseForm');
         if (form) form.reset();
-        
+
         console.log('Expense added:', transactionData);
     } catch (error) {
         console.error('Failed to add expense:', error);
@@ -621,55 +625,55 @@ async function addExpense(e) {
 // Add new transaction (other pages)
 async function addTransaction(e) {
     if (e) e.preventDefault();
-    
+
     console.log('addTransaction called');
-    
+
     const titleEl = document.getElementById('transactionTitle');
     const amountEl = document.getElementById('transactionAmount');
     const typeEl = document.getElementById('transactionType');
     const categoryEl = document.getElementById('transactionCategory');
     const descriptionEl = document.getElementById('transactionDescription');
-    
+
     console.log('Form elements:', { titleEl, amountEl, typeEl, categoryEl, descriptionEl });
-    
+
     if (!titleEl || !amountEl || !typeEl || !categoryEl) {
         console.error('Form elements not found');
         alert('Form not ready. Please try again.');
         return;
     }
-    
+
     const title = titleEl.value;
     const amount = parseFloat(amountEl.value);
     const type = typeEl.value;
     const category = categoryEl.value;
     const description = descriptionEl ? descriptionEl.value : title;
-    
+
     console.log('Form values:', { title, amount, type, category, description });
-    
+
     if (!title || title.trim() === '') {
         alert('Please enter a title');
         return;
     }
-    
+
     if (!amount || amount <= 0) {
         alert('Please enter a valid amount');
         return;
     }
-    
+
     if (!type) {
         alert('Please select a type');
         return;
     }
-    
+
     if (!category) {
         alert('Please select a category');
         return;
     }
-    
+
     try {
         // Import API module dynamically
         const { default: api } = await import('./api.js');
-        
+
         const transactionData = {
             title: title.trim(),
             description: description.trim() || title.trim(),
@@ -678,21 +682,21 @@ async function addTransaction(e) {
             category: category,
             date: new Date().toISOString().slice(0, 10)
         };
-        
+
         await api.transactions.create(transactionData);
-        
+
         // Refresh transactions from API if on transactions page
         if (typeof refreshTransactions === 'function') {
             await refreshTransactions();
         }
-        
+
         updateAll();
         hideModal('addTransactionModal');
-        
+
         // Reset form safely
         const form = document.getElementById('transactionForm');
         if (form) form.reset();
-        
+
         showToast('Transaction added successfully!', 'success');
     } catch (error) {
         console.error('Failed to add transaction:', error);
@@ -703,23 +707,23 @@ async function addTransaction(e) {
 // Add new budget
 function addBudget(e) {
     if (e) e.preventDefault();
-    
+
     const category = document.getElementById('budgetCategory').value;
     const amount = parseFloat(document.getElementById('budgetAmount').value);
     const period = document.getElementById('budgetPeriod') ? document.getElementById('budgetPeriod').value : 'monthly';
-    
+
     if (!category || !amount) {
         alert('Please fill all required fields');
         return;
     }
-    
+
     // Check if budget for this category already exists
     const existingBudget = budgets.find(b => b.category === category);
     if (existingBudget) {
         alert('Budget for this category already exists. Delete the existing one first.');
         return;
     }
-    
+
     const budget = {
         id: Date.now(),
         category: category,
@@ -728,7 +732,7 @@ function addBudget(e) {
         spent: 0,
         createdAt: new Date().toISOString()
     };
-    
+
     budgets.push(budget);
     saveData();
     updateAll();
@@ -743,14 +747,14 @@ async function deleteTransaction(id) {
         try {
             // Import API module dynamically
             const { default: api } = await import('./api.js');
-            
+
             await api.transactions.delete(id);
-            
+
             // Refresh transactions from API if on transactions page
             if (typeof refreshTransactions === 'function') {
                 await refreshTransactions();
             }
-            
+
             updateAll();
             console.log('Transaction deleted successfully');
             showToast('Transaction deleted!', 'success');
@@ -781,7 +785,7 @@ function updateAll() {
     updateBudgetOverview();
     updateAnalyticsPage();
     updateBudgetPage();
-    
+
     // Notify analytics page of data changes
     if (typeof window.notifyAnalyticsUpdate === 'function') {
         window.notifyAnalyticsUpdate();
@@ -792,7 +796,7 @@ function updateAll() {
 function updateSummary() {
     let totalIncome = 0;
     let totalExpenses = 0;
-    
+
     transactions.forEach(t => {
         if (t.type === 'income') {
             totalIncome += t.amount;
@@ -800,20 +804,20 @@ function updateSummary() {
             totalExpenses += t.amount;
         }
     });
-    
+
     const balance = totalIncome - totalExpenses;
-    
+
     // Update dashboard elements (correct IDs)
     const totalIncomeEl = document.getElementById('totalIncome');
     const totalExpensesEl = document.getElementById('totalExpenses');
     const currentBalanceEl = document.getElementById('currentBalance');
     const sidebarBalanceEl = document.getElementById('sidebarBalance');
-    
+
     if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
     if (totalExpensesEl) totalExpensesEl.textContent = formatCurrency(totalExpenses);
     if (currentBalanceEl) currentBalanceEl.textContent = formatCurrency(balance);
     if (sidebarBalanceEl) sidebarBalanceEl.textContent = formatCurrency(balance);
-    
+
     console.log('Summary updated:', { totalIncome, totalExpenses, balance });
 }
 
@@ -821,7 +825,7 @@ function updateSummary() {
 function updateTransactionsList() {
     const container = document.getElementById('recentTransactions');
     const tableBody = document.getElementById('transactionsTableBody');
-    
+
     if (container) {
         if (transactions.length === 0) {
             // Show empty state
@@ -854,7 +858,7 @@ function updateTransactionsList() {
             `).join('');
         }
     }
-    
+
     if (tableBody) {
         if (transactions.length === 0) {
             tableBody.innerHTML = '<tr><td colspan="6" class="text-center">No transactions yet</td></tr>';
@@ -884,20 +888,20 @@ function updateTransactionsList() {
 function updateExpenseChart() {
     const chartContainer = document.getElementById('expenseChart');
     if (!chartContainer) return;
-    
+
     // Calculate category spending
     const categorySpending = {};
     let totalExpenses = 0;
-    
+
     transactions
         .filter(t => t.type === 'expense')
         .forEach(t => {
             categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
             totalExpenses += t.amount;
         });
-    
+
     const categories = Object.keys(categorySpending);
-    
+
     if (categories.length === 0) {
         chartContainer.innerHTML = `
             <div class="text-center py-5">
@@ -907,7 +911,7 @@ function updateExpenseChart() {
         `;
         return;
     }
-    
+
     // Category colors
     const colors = {
         'Food': '#10b981',
@@ -919,7 +923,7 @@ function updateExpenseChart() {
         'Education': '#8b5cf6',
         'Other': '#64748b'
     };
-    
+
     // Generate legend items
     const legendHTML = categories
         .sort((a, b) => categorySpending[b] - categorySpending[a])
@@ -927,7 +931,7 @@ function updateExpenseChart() {
             const amount = categorySpending[category];
             const percentage = ((amount / totalExpenses) * 100).toFixed(0);
             const color = colors[category] || '#64748b';
-            
+
             return `
                 <div class="d-flex justify-content-between align-items-center mb-2">
                     <div class="d-flex align-items-center">
@@ -942,7 +946,7 @@ function updateExpenseChart() {
             `;
         })
         .join('');
-    
+
     chartContainer.innerHTML = legendHTML;
 }
 
@@ -950,7 +954,7 @@ function updateExpenseChart() {
 function updateBudgetOverview() {
     const container = document.getElementById('budgetOverview');
     if (!container) return;
-    
+
     if (budgets.length === 0) {
         container.innerHTML = `
             <div class="text-center py-5">
@@ -963,7 +967,7 @@ function updateBudgetOverview() {
         `;
         return;
     }
-    
+
     // Calculate spending per category
     const categorySpending = {};
     transactions
@@ -971,13 +975,13 @@ function updateBudgetOverview() {
         .forEach(t => {
             categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
         });
-    
+
     // Generate budget items
     const budgetHTML = budgets.slice(0, 4).map(budget => {
         const spent = categorySpending[budget.category] || 0;
         const percentage = Math.min((spent / budget.amount) * 100, 100);
         const isOverBudget = spent > budget.amount;
-        
+
         return `
             <div class="mb-3">
                 <div class="d-flex justify-content-between mb-1">
@@ -996,14 +1000,14 @@ function updateBudgetOverview() {
             </div>
         `;
     }).join('');
-    
+
     container.innerHTML = budgetHTML;
 }
 
 // Update budgets list
 function updateBudgetsList() {
     const container = document.getElementById('budgetOverview');
-    
+
     if (container) {
         if (budgets.length === 0) {
             container.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-piggy-bank fs-1 mb-3 d-block"></i><h6>No budgets set</h6><p>Create your first budget to track spending</p></div>';
@@ -1012,14 +1016,14 @@ function updateBudgetsList() {
                 // Calculate spent amount for current month
                 const currentMonth = new Date().toISOString().slice(0, 7);
                 const spent = transactions
-                    .filter(t => t.type === 'expense' && 
-                               t.category === b.category && 
-                               t.date.slice(0, 7) === currentMonth)
+                    .filter(t => t.type === 'expense' &&
+                        t.category === b.category &&
+                        t.date.slice(0, 7) === currentMonth)
                     .reduce((sum, t) => sum + t.amount, 0);
-                
+
                 const percentage = b.amount > 0 ? (spent / b.amount) * 100 : 0;
                 const progressClass = percentage >= 90 ? 'danger' : percentage >= 70 ? 'warning' : 'safe';
-                
+
                 return `
                     <div class="budget-item mb-3">
                         <div class="budget-header d-flex justify-content-between align-items-center mb-2">
@@ -1051,7 +1055,7 @@ function updateBudgetsList() {
 function updateAnalyticsPage() {
     let totalIncome = 0;
     let totalExpenses = 0;
-    
+
     transactions.forEach(transaction => {
         if (transaction.type === 'income') {
             totalIncome += transaction.amount;
@@ -1059,14 +1063,14 @@ function updateAnalyticsPage() {
             totalExpenses += transaction.amount;
         }
     });
-    
+
     const totalBalance = totalIncome - totalExpenses;
-    
+
     // Update analytics summary cards
     const totalIncomeEl = document.getElementById('totalIncome');
     const totalExpensesEl = document.getElementById('totalExpenses');
     const currentBalanceEl = document.getElementById('currentBalance');
-    
+
     if (totalIncomeEl) totalIncomeEl.textContent = formatCurrency(totalIncome);
     if (totalExpensesEl) totalExpensesEl.textContent = formatCurrency(totalExpenses);
     if (currentBalanceEl) currentBalanceEl.textContent = formatCurrency(totalBalance);
@@ -1080,18 +1084,18 @@ function updateBudgetPage() {
     const overallProgressBarEl = document.getElementById('overallProgressBar');
     const remainingAmountEl = document.getElementById('remainingAmount');
     const budgetsListEl = document.getElementById('budgetsList');
-    
+
     if (!budgetsListEl) return;
-    
+
     let totalBudgetAmount = 0;
     let totalSpentAmount = 0;
     const currentMonth = new Date().toISOString().slice(0, 7);
-    
+
     // Calculate total budget
     budgets.forEach(budget => {
         totalBudgetAmount += budget.amount;
     });
-    
+
     // Calculate total spent this month
     const categorySpending = {};
     transactions
@@ -1100,19 +1104,19 @@ function updateBudgetPage() {
             totalSpentAmount += t.amount;
             categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
         });
-    
+
     // Update summary
     if (totalBudgetAmountEl) totalBudgetAmountEl.textContent = formatCurrency(totalBudgetAmount);
     if (totalSpentAmountEl) totalSpentAmountEl.textContent = formatCurrency(totalSpentAmount);
-    
+
     // Update progress
     const progressPercent = totalBudgetAmount > 0 ? (totalSpentAmount / totalBudgetAmount) * 100 : 0;
     if (overallProgressEl) overallProgressEl.textContent = progressPercent.toFixed(1) + '%';
     if (overallProgressBarEl) overallProgressBarEl.style.width = Math.min(progressPercent, 100) + '%';
-    
+
     const remaining = totalBudgetAmount - totalSpentAmount;
     if (remainingAmountEl) remainingAmountEl.textContent = formatCurrency(remaining) + ' remaining this month';
-    
+
     // Update budgets list
     if (budgets.length === 0) {
         budgetsListEl.innerHTML = `
@@ -1127,7 +1131,7 @@ function updateBudgetPage() {
             const percentage = (spent / budget.amount) * 100;
             const remaining = budget.amount - spent;
             const isOverBudget = spent > budget.amount;
-            
+
             return `
                 <div class="card mb-3">
                     <div class="card-body">
@@ -1162,7 +1166,7 @@ function updateSpendingChart() {
     if (expenseChart) {
         updateExpenseChartLegend();
     }
-    
+
     console.log('Charts updated with CSS-based implementation');
 }
 
@@ -1170,22 +1174,22 @@ function updateSpendingChart() {
 function updateExpenseChartLegend() {
     const chartLegend = document.querySelector('.chart-legend');
     if (!chartLegend) return;
-    
+
     // Calculate category spending
     const categorySpending = {};
     let totalExpenses = 0;
-    
+
     transactions
         .filter(t => t.type === 'expense')
         .forEach(t => {
             categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
             totalExpenses += t.amount;
         });
-    
+
     // Colors for different categories
     const categoryColors = {
         'Food': '#3b82f6',
-        'Transportation': '#ef4444', 
+        'Transportation': '#ef4444',
         'Shopping': '#f59e0b',
         'Bills': '#10b981',
         'Entertainment': '#8b5cf6',
@@ -1193,13 +1197,13 @@ function updateExpenseChartLegend() {
         'Education': '#f97316',
         'Other': '#64748b'
     };
-    
+
     // Generate legend HTML
     const legendHTML = Object.entries(categorySpending)
         .map(([category, amount]) => {
             const percentage = totalExpenses > 0 ? ((amount / totalExpenses) * 100).toFixed(1) : 0;
             const color = categoryColors[category] || '#64748b';
-            
+
             return `
                 <div class="legend-item">
                     <span class="legend-color" style="background: ${color};"></span>
@@ -1208,7 +1212,7 @@ function updateExpenseChartLegend() {
             `;
         })
         .join('');
-    
+
     if (legendHTML) {
         chartLegend.innerHTML = legendHTML;
     } else {
@@ -1221,59 +1225,65 @@ function initializeMobileMenu() {
     const mobileMenuBtn = document.getElementById('mobileMenuBtn');
     const sidebar = document.querySelector('.sidebar');
     const sidebarOverlay = document.getElementById('sidebarOverlay');
-    
+
     if (mobileMenuBtn && sidebar && sidebarOverlay) {
         // Toggle sidebar on mobile menu button click
-        mobileMenuBtn.addEventListener('click', function() {
+        mobileMenuBtn.addEventListener('click', function () {
             const isActive = sidebar.classList.contains('active');
-            
+
             if (isActive) {
                 // Closing sidebar
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
+                document.body.style.overflow = '';
             } else {
                 // Opening sidebar
                 sidebar.classList.add('active');
                 sidebarOverlay.classList.add('active');
                 mobileMenuBtn.classList.add('active');
+                document.body.style.overflow = 'hidden';
             }
         });
-        
+
         // Close sidebar when clicking overlay
-        sidebarOverlay.addEventListener('click', function() {
+        sidebarOverlay.addEventListener('click', function () {
             sidebar.classList.remove('active');
             sidebarOverlay.classList.remove('active');
             mobileMenuBtn.classList.remove('active');
+            document.body.style.overflow = '';
         });
-        
+
         // Close sidebar when clicking on sidebar links (mobile only)
         const sidebarLinks = sidebar.querySelectorAll('.sidebar-nav-link');
         sidebarLinks.forEach(link => {
-            link.addEventListener('click', function() {
-                if (window.innerWidth <= 768) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth <= 991) {
                     sidebar.classList.remove('active');
                     sidebarOverlay.classList.remove('active');
                     mobileMenuBtn.classList.remove('active');
+                    document.body.style.overflow = '';
                 }
             });
         });
-        
+
         // Close sidebar on window resize if desktop
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768) {
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 991) {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
-        
+
         // Close sidebar on escape key
-        document.addEventListener('keydown', function(e) {
+        document.addEventListener('keydown', function (e) {
             if (e.key === 'Escape' && sidebar.classList.contains('active')) {
                 sidebar.classList.remove('active');
                 sidebarOverlay.classList.remove('active');
                 mobileMenuBtn.classList.remove('active');
+                document.body.style.overflow = '';
             }
         });
     }
@@ -1281,7 +1291,7 @@ function initializeMobileMenu() {
 
 
 // Initialize mobile menu when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     initializeMobileMenu();
 });
 
@@ -1313,15 +1323,15 @@ function debugData() {
 function showToast(message, type = 'info') {
     const toast = document.getElementById('toast');
     const toastBody = document.getElementById('toastBody');
-    
+
     if (!toast || !toastBody) {
         // Fallback to alert if toast not available
         alert(message);
         return;
     }
-    
+
     toastBody.textContent = message;
-    
+
     // Reset classes and set new ones
     toast.className = 'toast show';
     if (type === 'success') {
@@ -1331,10 +1341,10 @@ function showToast(message, type = 'info') {
     } else {
         toast.classList.add('bg-info', 'text-white');
     }
-    
+
     // Show the toast
     toast.style.display = 'block';
-    
+
     // Auto hide after 3 seconds
     setTimeout(() => {
         hideToast();
