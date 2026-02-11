@@ -89,24 +89,78 @@
     <!-- Bottom Navigation for Mobile -->
     <nav class="bottom-nav d-md-none">
         <a href="{{ url('/dashboard') }}" class="bottom-nav-item {{ request()->is('dashboard') ? 'active' : '' }}">
-            <i class="bi bi-house-door-fill"></i>
+            <i class="bi bi-house-door{{ request()->is('dashboard') ? '-fill' : '' }}"></i>
             <span>Home</span>
         </a>
         <a href="{{ url('/transactions') }}" class="bottom-nav-item {{ request()->is('transactions*') ? 'active' : '' }}">
-            <i class="bi bi-receipt"></i>
+            <i class="bi bi-receipt{{ request()->is('transactions*') ? '-cutoff' : '' }}"></i>
             <span>Trans</span>
         </a>
         <div class="bottom-nav-spacer"></div>
         <a href="{{ url('/budget') }}" class="bottom-nav-item {{ request()->is('budget*') ? 'active' : '' }}">
-            <i class="bi bi-piggy-bank"></i>
+            <i class="bi bi-piggy-bank{{ request()->is('budget*') ? '-fill' : '' }}"></i>
             <span>Budget</span>
         </a>
-        <a href="{{ url('/analytics') }}" class="bottom-nav-item {{ request()->is('analytics*') ? 'active' : '' }}">
-            <i class="bi bi-bar-chart-fill"></i>
-            <span>Charts</span>
+        <a href="{{ url('/settings') }}" class="bottom-nav-item {{ request()->is('settings*') ? 'active' : '' }}">
+            <i class="bi bi-gear{{ request()->is('settings*') ? '-fill' : '' }}"></i>
+            <span>Settings</span>
         </a>
     </nav>
     @endunless
+
+    <!-- Global Add Transaction Modal -->
+    <div class="modal fade" id="addTransactionModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title">Add Transaction</h5>
+                        <p class="text-muted mb-0" style="font-size: 14px;">Create a new income or expense transaction</p>
+                    </div>
+                    <button type="button" class="btn-close" onclick="hideModal('addTransactionModal')"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="transactionForm">
+                        <div class="mb-3">
+                            <label class="form-label">Title</label>
+                            <input type="text" class="form-control" id="transactionTitle" required placeholder="What was it for?">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Amount</label>
+                            <input type="number" class="form-control" id="transactionAmount" step="0.01" required placeholder="0.00">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" id="transactionType" required>
+                                <option value="expense" selected>Expense</option>
+                                <option value="income">Income</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Category</label>
+                            <select class="form-select" id="transactionCategory" required>
+                                <option value="" selected disabled>Select category</option>
+                                <option value="Food">Food</option>
+                                <option value="Transportation">Transportation</option>
+                                <option value="Shopping">Shopping</option>
+                                <option value="Bills">Bills</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Healthcare">Healthcare</option>
+                                <option value="Salary">Salary</option>
+                                <option value="Freelance">Freelance</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date</label>
+                            <input type="date" class="form-control" id="transactionDate" required value="{{ date('Y-m-d') }}">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100">Add Transaction</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Container -->
     <div class="toast-container position-fixed bottom-0 end-0 p-3">

@@ -82,65 +82,7 @@
         </div>
     </div>
 
-    <!-- Add Transaction Modal -->
-    <div class="modal fade" id="addTransactionModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <div>
-                        <h5 class="modal-title">Add Transaction</h5>
-                        <p class="text-muted mb-0" style="font-size: 14px;">Create a new income or expense transaction</p>
-                    </div>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="transactionForm">
-                        <div class="mb-3">
-                            <label class="form-label">Title</label>
-                            <input type="text" class="form-control" id="transactionTitle" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Amount</label>
-                            <input type="number" class="form-control" id="transactionAmount" step="0.01" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Type</label>
-                            <select class="form-select" id="transactionType" required>
-                                <option value="expense" selected>Expense</option>
-                                <option value="income">Income</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Category</label>
-                            <select class="form-select" id="transactionCategory" required>
-                                <option value="" selected>Select category</option>
-                                <option value="Salary">Salary</option>
-                                <option value="Freelance">Freelance</option>
-                                <option value="Food">Food</option>
-                                <option value="Transportation">Transportation</option>
-                                <option value="Shopping">Shopping</option>
-                                <option value="Bills">Bills</option>
-                                <option value="Entertainment">Entertainment</option>
-                                <option value="Healthcare">Healthcare</option>
-                                <option value="Education">Education</option>
-                                <option value="Subscriptions">Subscriptions</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Date</label>
-                            <input type="date" class="form-control" id="transactionDate" required value="{{ date('Y-m-d') }}">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description (Optional)</label>
-                            <textarea class="form-control" id="transactionDescription" rows="2"></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100">Add Transaction</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Transaction Modals now in layouts/app.blade.php -->
 
     <!-- Edit Transaction Modal -->
     <div class="modal fade" id="editTransactionModal" tabindex="-1">

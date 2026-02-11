@@ -13,7 +13,10 @@
 }
 
 :root {
-    --primary: #e4a5b8;
+    --primary: #d63384;
+    /* Darker Pink for better contrast */
+    --primary-hover: #b02a6a;
+    --primary-light: rgba(214, 51, 132, 0.1);
     --secondary: #a8b5c8;
     --success: #a8d5ba;
     --danger: #f5a5a5;
@@ -204,8 +207,9 @@ p {
 
 .sidebar-nav-link.active {
     background: var(--primary);
-    color: #ffffff;
+    color: #ffffff !important;
     border-radius: 12px;
+    box-shadow: 0 4px 12px var(--primary-light);
 }
 
 .sidebar-nav-link i {
@@ -3411,15 +3415,15 @@ body[data-theme="dark"] {
     transform: translateX(-50%);
     width: 62px;
     height: 62px;
-    background: linear-gradient(135deg, var(--primary), #d98ca5);
+    background: linear-gradient(135deg, var(--primary), #a32261);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: white !important;
     font-size: 28px;
-    box-shadow: 0 10px 25px rgba(228, 165, 184, 0.5);
-    border: 5px solid white;
+    box-shadow: 0 10px 25px rgba(214, 51, 132, 0.4);
+    border: 4px solid white;
     z-index: 6001;
     cursor: pointer;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -3461,9 +3465,9 @@ body[data-theme="dark"] {
 }
 
 .sidebar-nav-link.active {
-    background: linear-gradient(135deg, var(--primary), #d98ca5);
-    color: white;
-    box-shadow: 0 4px 15px rgba(228, 165, 184, 0.3);
+    background: linear-gradient(135deg, var(--primary), #a32261);
+    color: white !important;
+    box-shadow: 0 4px 15px var(--primary-light);
 }
 
 /* Dark Mode Overrides for Nav */

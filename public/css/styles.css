@@ -15,9 +15,9 @@
     --border-color: #e2e8f0;
     --border-light: #edf2f7;
 
-    --primary-color: #4fd1c5;
-    --primary-hover: #38b2ac;
-    --primary-light: rgba(79, 209, 197, 0.1);
+    --primary-color: #d63384;
+    --primary-hover: #b02a6a;
+    --primary-light: rgba(214, 51, 132, 0.1);
     --accent-color: #4fd1c5;
 
     --success-color: #48bb78;
@@ -26,8 +26,9 @@
     --info-color: #4299e1;
 
     --sidebar-width: 260px;
-    --sidebar-active-bg: #e6fffa;
-    --sidebar-active-text: #319795;
+    --sidebar-active-bg: var(--primary-color);
+    --sidebar-active-text: #ffffff;
+    --sidebar-active-icon: #ffffff;
 
     --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
     --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
@@ -1306,14 +1307,14 @@ body:not(.theme-dark) .dark-icon {
     transform: translateX(-50%);
     width: 62px;
     height: 62px;
-    background: linear-gradient(135deg, var(--primary), #d98ca5);
+    background: linear-gradient(135deg, var(--primary-color), #a32261);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
+    color: white !important;
     font-size: 28px;
-    box-shadow: 0 10px 25px rgba(228, 165, 184, 0.5);
+    box-shadow: 0 10px 25px rgba(214, 51, 132, 0.4);
     border: 5px solid white;
     z-index: 6001;
     cursor: pointer;
