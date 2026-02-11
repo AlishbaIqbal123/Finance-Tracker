@@ -5,7 +5,7 @@
             <i class="bi bi-clock-fill text-primary"></i>
             <span class="brand-text ms-2">FinanceTracker</span>
         </a>
-        <button id="sidebarToggle" class="btn btn-link text-muted p-0 d-none d-lg-flex align-items-center justify-content-center">
+        <button id="sidebarToggleSidebar" class="btn btn-link text-muted p-0 d-flex sidebar-toggle align-items-center justify-content-center">
             <i class="bi bi-list fs-4"></i>
         </button>
     </div>

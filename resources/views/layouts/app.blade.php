@@ -39,7 +39,7 @@
                 <div class="container-fluid px-2 px-md-4">
                     <div class="d-flex align-items-center flex-grow-1 flex-md-grow-0">
                         <!-- Hamburger Menu for Tablet/Medium Screens -->
-                        <button class="btn btn-link text-decoration-none p-0 me-3 d-lg-none" id="sidebarToggle" type="button">
+                        <button class="btn btn-link text-decoration-none p-0 me-3 d-lg-none sidebar-toggle" id="sidebarToggleNavbar" type="button">
                             <i class="bi bi-list fs-3" style="color: var(--text-color);"></i>
                         </button>
                         <h4 class="mb-0 fw-bold fs-5 fs-md-4">@yield('page_title', 'Overview')</h4>
@@ -228,38 +228,30 @@
         
         // Sidebar Toggle for Tablet/Medium Screens
         document.addEventListener('DOMContentLoaded', function() {
-            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebarToggles = document.querySelectorAll('.sidebar-toggle');
             const sidebar = document.querySelector('.sidebar');
             const sidebarOverlay = document.getElementById('sidebarOverlay');
             
-            console.log('Sidebar toggle initialized:', {
-                sidebarToggle: !!sidebarToggle,
-                sidebar: !!sidebar,
-                sidebarOverlay: !!sidebarOverlay
-            });
-            
-            if (sidebarToggle && sidebar) {
-                // Toggle sidebar on button click
-                sidebarToggle.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    console.log('Sidebar toggle clicked');
-                    sidebar.classList.toggle('active');
-                    console.log('Sidebar active:', sidebar.classList.contains('active'));
-                    if (sidebarOverlay) {
-                        sidebarOverlay.classList.toggle('active');
-                    }
-                    // Prevent body scroll when sidebar is open
-                    if (sidebar.classList.contains('active')) {
-                        document.body.style.overflow = 'hidden';
-                    } else {
-                        document.body.style.overflow = '';
-                    }
+            if (sidebar && sidebarToggles.length > 0) {
+                sidebarToggles.forEach(toggle => {
+                    toggle.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        sidebar.classList.toggle('active');
+                        if (sidebarOverlay) {
+                            sidebarOverlay.classList.toggle('active');
+                        }
+                        // Prevent body scroll when sidebar is open on responsive screens
+                        if (sidebar.classList.contains('active')) {
+                            document.body.style.overflow = 'hidden';
+                        } else {
+                            document.body.style.overflow = '';
+                        }
+                    });
                 });
                 
                 // Close sidebar when clicking overlay
                 if (sidebarOverlay) {
                     sidebarOverlay.addEventListener('click', function() {
-                        console.log('Overlay clicked');
                         sidebar.classList.remove('active');
                         sidebarOverlay.classList.remove('active');
                         document.body.style.overflow = '';
@@ -271,7 +263,6 @@
                 sidebarLinks.forEach(link => {
                     link.addEventListener('click', function() {
                         if (window.innerWidth < 1024) {
-                            console.log('Sidebar link clicked, closing sidebar');
                             sidebar.classList.remove('active');
                             if (sidebarOverlay) {
                                 sidebarOverlay.classList.remove('active');
@@ -280,8 +271,6 @@
                         }
                     });
                 });
-            } else {
-                console.error('Sidebar toggle elements not found!');
             }
         });
     </script>
