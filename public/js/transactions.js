@@ -61,12 +61,20 @@ function applyFilters() {
     const month = document.getElementById('monthFilter').value; // yyyy-mm
     const amountRange = document.getElementById('amountFilter').value;
 
-    filteredTransactions = window.transactions.filter(t => {
-        // Text Match
-        const textMatch = t.description.toLowerCase().includes(searchTerm) ||
-            t.category.toLowerCase().includes(searchTerm) ||
-            t.title?.toLowerCase().includes(searchTerm);
-        if (!textMatch) return false;
+    const transactionsToFilter = window.transactions || [];
+
+    filteredTransactions = transactionsToFilter.filter(t => {
+        if (!t) return false;
+
+        // Text Match - handle potential nulls
+        const searchInput = searchTerm || '';
+        const titleStr = (t.title || '').toLowerCase();
+        const descStr = (t.description || '').toLowerCase();
+        const catStr = (t.category || '').toLowerCase();
+
+        if (searchInput && !titleStr.includes(searchInput) && !descStr.includes(searchInput) && !catStr.includes(searchInput)) {
+            return false;
+        }
 
         // Type Match
         if (type && t.type !== type) return false;
@@ -75,9 +83,7 @@ function applyFilters() {
         if (category && t.category !== category) return false;
 
         // Month Match
-        if (month) {
-            if (!t.date.startsWith(month)) return false;
-        }
+        if (month && t.date && !t.date.startsWith(month)) return false;
 
         // Amount Match
         if (amountRange) {
@@ -134,10 +140,10 @@ function renderTransactionsTable() {
             </td>
             <td class="text-end">
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-light text-primary border-0 rounded-circle p-2 mx-1" onclick="openEditModal(${t.id})" title="Edit">
+                    <button class="btn btn-sm btn-light text-primary border-0 rounded-circle p-2 mx-1" onclick="openEditModal('${t.id}')" title="Edit">
                         <i class="bi bi-pencil-fill"></i>
                     </button>
-                    <button class="btn btn-sm btn-light text-danger border-0 rounded-circle p-2 mx-1" onclick="deleteTransaction(${t.id})" title="Delete">
+                    <button class="btn btn-sm btn-light text-danger border-0 rounded-circle p-2 mx-1" onclick="deleteTransaction('${t.id}')" title="Delete">
                         <i class="bi bi-trash-fill"></i>
                     </button>
                 </div>
@@ -192,8 +198,11 @@ function changePage(page) {
 }
 
 function openEditModal(id) {
-    const t = window.transactions.find(item => item.id === id);
-    if (!t) return;
+    const t = window.transactions.find(item => String(item.id) === String(id));
+    if (!t) {
+        console.error('Transaction not found for ID:', id);
+        return;
+    }
 
     document.getElementById('editTransactionId').value = t.id;
     document.getElementById('editTitle').value = t.title || t.description || '';
@@ -207,10 +216,10 @@ function openEditModal(id) {
     modal.show();
 }
 
-function updateTransaction() {
+async function updateTransaction() {
     if (window.checkGuestAccess && window.checkGuestAccess()) return;
 
-    const id = parseInt(document.getElementById('editTransactionId').value);
+    const id = document.getElementById('editTransactionId').value;
     const title = document.getElementById('editTitle').value;
     const amount = parseFloat(document.getElementById('editAmount').value);
     const type = document.getElementById('editType').value;
@@ -223,27 +232,55 @@ function updateTransaction() {
         return;
     }
 
-    const index = window.transactions.findIndex(t => t.id === id);
+    const transactionData = {
+        title,
+        amount,
+        type,
+        category,
+        date,
+        description
+    };
+
+    const index = window.transactions.findIndex(t => String(t.id) === String(id));
     if (index !== -1) {
-        window.transactions[index] = {
-            id,
-            title,
-            amount,
-            type,
-            category,
-            date,
-            description
-        };
-        // Update global storage
-        window.transactions = [...window.transactions]; // Trigger setter
-        saveToSession(); // Assuming this is available globally or we use the setter side-effect
+        // API Call if not guest
+        if (typeof isGuest === 'function' && !isGuest()) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch(`/api/transactions/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    console.error('Failed to update on server:', error);
+                    showToast('Failed to update server', 'warning');
+                }
+            } catch (err) {
+                console.error('Update API error:', err);
+            }
+        }
+
+        // Update local state
+        window.transactions[index] = { ...window.transactions[index], ...transactionData };
+
+        // Persist and Refresh
+        if (typeof saveData === 'function') saveData();
+        if (typeof updateAll === 'function') updateAll();
 
         // Hide modal
         const modalEl = document.getElementById('editTransactionModal');
         const modal = bootstrap.Modal.getInstance(modalEl);
-        modal.hide();
+        if (modal) modal.hide();
 
         showToast('Transaction updated successfully', 'success');
-        applyFilters(); // Refresh table
+        if (typeof applyFilters === 'function') applyFilters();
     }
 }

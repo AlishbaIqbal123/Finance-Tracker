@@ -2,8 +2,8 @@
 let transactions = [];
 let budgets = [];
 
-// Script Version: 1.13 (Updated at 2026-01-04 20:30:00)
-console.log('FinanceTracker Script v1.13 initialized');
+// Script Version: 1.14 (Updated at 2026-02-10 01:30:00)
+console.log('FinanceTracker Script v1.14 initialized');
 
 // --- Global Budget Navigation Logic (Moved up for availability) ---
 window.budgetViewMonth = (function () {
@@ -130,21 +130,19 @@ function getStorageKey(baseKey) {
 }
 
 // Load data from localStorage on page load
-function loadFileData() {
+async function loadFileData() {
     const transactionKey = getStorageKey('transactions');
     const budgetKey = getStorageKey('budgets');
 
-    // Check if we are a guest (no profile found)
-    const isGuest = !localStorage.getItem('financeTracker_profile');
+    // Check if we are a guest
+    const isGuestUser = isGuest();
 
     let savedTransactions = localStorage.getItem(transactionKey);
     let savedBudgets = localStorage.getItem(budgetKey);
 
-    // CRITICAL: If Guest AND (No Data OR Old Data Version), Force Load Sample Data
+    // CRITICAL: Demo Data Injection
     const demoVersion = '1.12';
     const savedVersion = localStorage.getItem('ft_demo_version');
-
-    // Force inject for generic guest OR specifically logged-in demo user
     const userProfile = localStorage.getItem('financeTracker_profile');
     let isDemoAccount = false;
     if (userProfile) {
@@ -153,49 +151,74 @@ function loadFileData() {
         } catch (e) { }
     }
 
-    const shouldInject = isGuest || isDemoAccount;
+    const shouldInject = isGuestUser || isDemoAccount;
 
     if (shouldInject && (!savedTransactions || savedTransactions === '[]' || savedVersion !== demoVersion)) {
-        console.log('Guest user: Injecting updated sample data (v' + demoVersion + ')');
+        console.log('Demo/Guest mode: Injecting sample data');
         transactions = [...sampleTransactions2026];
         budgets = [...sampleBudgets2026];
-
-        // Save immediately to fix the persistent storage state
         localStorage.setItem(transactionKey, JSON.stringify(transactions));
         localStorage.setItem(budgetKey, JSON.stringify(budgets));
         localStorage.setItem('ft_demo_version', demoVersion);
-
         window.transactions = transactions;
         window.budgets = budgets;
-        updateAll(); // Force UI update immediately
-        return; // Initialization complete
+        updateAll();
+        return;
     }
 
-    // Normal Load Logic
+    // Normal Load from LocalStorage
     if (savedTransactions) {
         try {
             transactions = JSON.parse(savedTransactions);
-            window.transactions = transactions;
-        } catch (e) {
-            transactions = [];
-            window.transactions = [];
-        }
+        } catch (e) { transactions = []; }
     } else {
         transactions = [];
-        window.transactions = [];
     }
+    window.transactions = transactions;
 
     if (savedBudgets) {
         try {
             budgets = JSON.parse(savedBudgets);
-            window.budgets = budgets;
-        } catch (e) {
-            budgets = [];
-            window.budgets = [];
-        }
+        } catch (e) { budgets = []; }
     } else {
         budgets = [];
-        window.budgets = [];
+    }
+    window.budgets = budgets;
+
+    // --- SYNC WITH DATABASE IF LOGGED IN ---
+    if (!isGuestUser && !isDemoAccount) {
+        try {
+            console.log('Syncing with database...');
+            const response = await fetch('/api/transactions', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            });
+            if (response.ok) {
+                const result = await response.json();
+
+                // Only overwrite if server has data, OR if local is currently empty
+                // This prevents the "glitch" where local data disappears if server is empty
+                if (result.data && (result.data.length > 0 || transactions.length === 0)) {
+                    // Check if server data is actually different or newer
+                    // For now, we prefer server as the source of truth if it has items
+                    if (result.data.length > 0) {
+                        transactions = result.data;
+                        window.transactions = transactions;
+                        localStorage.setItem(transactionKey, JSON.stringify(transactions));
+                        console.log('Database sync complete:', transactions.length, 'items');
+                    }
+                } else if (result.data && result.data.length === 0 && transactions.length > 0) {
+                    console.log('Server is empty but local has data. Keeping local data.');
+                    // Optional: You could trigger a bulk push here if you wanted
+                }
+
+                updateAll();
+            }
+        } catch (e) {
+            console.warn('Database sync failed (offline or auth issue)', e);
+        }
     }
 }
 
@@ -620,7 +643,7 @@ function hideModal(modalOrId) {
 }
 
 // Add new income (dashboard)
-function addIncome(e) {
+async function addIncome(e) {
     if (e) e.preventDefault();
     console.log('addIncome triggered');
 
@@ -646,26 +669,14 @@ function addIncome(e) {
         const amount = parseFloat(amountEl.value);
         const category = categoryEl.value;
         const description = descriptionEl ? descriptionEl.value : title;
-
-        // Auto-date from input
         const dateEl = document.getElementById('incomeDate');
         const date = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().slice(0, 10);
 
-        console.log('Processing Income:', { title, amount, category, date });
-
         // Validation
-        if (!title || title.trim() === '') {
-            alert('Please enter a title');
-            return;
-        }
+        if (!title || title.trim() === '') { alert('Please enter a title'); return; }
+        if (isNaN(amount) || amount <= 0) { alert('Please enter a valid amount'); return; }
 
-        if (isNaN(amount) || amount <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
-
-        const transaction = {
-            id: Date.now(),
+        const transactionData = {
             title: title.trim(),
             amount: amount,
             type: 'income',
@@ -674,17 +685,48 @@ function addIncome(e) {
             description: description.trim() || title.trim()
         };
 
-        transactions.unshift(transaction);
+        let finalTransaction = { ...transactionData, id: Date.now() };
+
+        // API Call if not guest
+        if (!isGuest()) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data) {
+                        finalTransaction = result.data;
+                        console.log('Saved to database with ID:', finalTransaction.id);
+                    }
+                } else {
+                    const error = await response.json();
+                    console.error('Failed to save to database:', error);
+                    // We'll still keep it locally for now
+                }
+            } catch (err) {
+                console.error('API call error:', err);
+            }
+        }
+
+        transactions.unshift(finalTransaction);
         saveData();
         updateAll();
         hideModal('addIncomeModal');
 
-        // Reset form safely
         const form = document.getElementById('incomeForm');
         if (form) form.reset();
 
         showToast('Income added successfully!', 'success');
-        console.log('Income added and UI updated');
     } catch (err) {
         console.error('Critical error in addIncome:', err);
         alert('An error occurred while saving. Check console for details.');
@@ -692,7 +734,7 @@ function addIncome(e) {
 }
 
 // Add new expense (dashboard)
-function addExpense(e) {
+async function addExpense(e) {
     if (e) e.preventDefault();
     console.log('addExpense triggered');
 
@@ -702,14 +744,13 @@ function addExpense(e) {
     }
 
     try {
-        // Check if elements exist
         const titleEl = document.getElementById('expenseTitle');
         const amountEl = document.getElementById('expenseAmount');
         const categoryEl = document.getElementById('expenseCategory');
         const descriptionEl = document.getElementById('expenseDescription');
 
         if (!titleEl || !amountEl || !categoryEl) {
-            console.error('Expense form elements not found', { titleEl, amountEl, categoryEl });
+            console.error('Expense form elements not found');
             alert('Form elements missing. Please refresh the page.');
             return;
         }
@@ -718,26 +759,13 @@ function addExpense(e) {
         const amount = parseFloat(amountEl.value);
         const category = categoryEl.value;
         const description = descriptionEl ? descriptionEl.value : title;
-
-        // Auto-date from input
         const dateEl = document.getElementById('expenseDate');
         const date = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().slice(0, 10);
 
-        console.log('Processing Expense:', { title, amount, category, date });
+        if (!title || title.trim() === '') { alert('Please enter a title'); return; }
+        if (isNaN(amount) || amount <= 0) { alert('Please enter a valid amount'); return; }
 
-        // Validation
-        if (!title || title.trim() === '') {
-            alert('Please enter a title');
-            return;
-        }
-
-        if (isNaN(amount) || amount <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
-
-        const transaction = {
-            id: Date.now(),
+        const transactionData = {
             title: title.trim(),
             amount: amount,
             type: 'expense',
@@ -746,17 +774,43 @@ function addExpense(e) {
             description: description.trim() || title.trim()
         };
 
-        transactions.unshift(transaction);
+        let finalTransaction = { ...transactionData, id: Date.now() };
+
+        // API Call if not guest
+        if (!isGuest()) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data) {
+                        finalTransaction = result.data;
+                    }
+                }
+            } catch (err) {
+                console.error('API call error:', err);
+            }
+        }
+
+        transactions.unshift(finalTransaction);
         saveData();
         updateAll();
         hideModal('addExpenseModal');
 
-        // Reset form safely
         const form = document.getElementById('expenseForm');
         if (form) form.reset();
 
         showToast('Expense added successfully!', 'success');
-        console.log('Expense added and UI updated');
     } catch (err) {
         console.error('Critical error in addExpense:', err);
         alert('An error occurred while saving. Check console for details.');
@@ -764,7 +818,7 @@ function addExpense(e) {
 }
 
 // Add new transaction (other pages)
-function addTransaction(e) {
+async function addTransaction(e) {
     if (e) e.preventDefault();
     console.log('addTransaction triggered');
 
@@ -788,30 +842,13 @@ function addTransaction(e) {
         const type = typeEl.value;
         const category = categoryEl.value;
         const description = descriptionEl ? descriptionEl.value : '';
-
-        // Validation
-        if (!title || title.trim() === '') {
-            alert('Please enter a title');
-            return;
-        }
-
-        if (isNaN(amount) || amount <= 0) {
-            alert('Please enter a valid amount');
-            return;
-        }
-
-        if (!type || !category) {
-            alert('Please select both type and category');
-            return;
-        }
-
         const dateEl = document.getElementById('transactionDate');
         const date = (dateEl && dateEl.value) ? dateEl.value : new Date().toISOString().slice(0, 10);
 
-        console.log('Processing Transaction:', { title, amount, type, category, date });
+        if (!title || title.trim() === '') { alert('Please enter a title'); return; }
+        if (isNaN(amount) || amount <= 0) { alert('Please enter a valid amount'); return; }
 
-        const transaction = {
-            id: Date.now(),
+        const transactionData = {
             title: title.trim(),
             description: description.trim() || title.trim(),
             amount: amount,
@@ -820,7 +857,35 @@ function addTransaction(e) {
             date: date
         };
 
-        transactions.unshift(transaction);
+        let finalTransaction = { ...transactionData, id: Date.now() };
+
+        // API Call if not guest
+        if (!isGuest()) {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+            try {
+                const response = await fetch('/api/transactions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify(transactionData)
+                });
+
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.data) {
+                        finalTransaction = result.data;
+                    }
+                }
+            } catch (err) {
+                console.error('API call error:', err);
+            }
+        }
+
+        transactions.unshift(finalTransaction);
         saveData();
         updateAll();
         hideModal('addTransactionModal');
@@ -829,7 +894,6 @@ function addTransaction(e) {
         if (form) form.reset();
 
         showToast('Transaction added successfully!', 'success');
-        console.log('Transaction added and UI updated');
     } catch (err) {
         console.error('Critical error in addTransaction:', err);
         alert('An error occurred while saving. Check console for details.');
@@ -855,14 +919,25 @@ function addBudget(e) {
 
     const existingBudget = budgets.find(b => {
         const matchesCategory = b.category === category;
-        const matchesMonth = (b.month === viewMonth && b.year === viewYear);
-        // Fallback for older data that only has createdAt
-        const matchesOld = b.createdAt && new Date(b.createdAt).getMonth() === viewMonth && new Date(b.createdAt).getFullYear() === viewYear;
-        return matchesCategory && (matchesMonth || matchesOld);
+        if (!matchesCategory) return false;
+
+        // Strict month/year match if properties exist
+        if (b.month !== undefined && b.year !== undefined) {
+            return parseInt(b.month) === viewMonth && parseInt(b.year) === viewYear;
+        }
+
+        // Fallback for very old data that only has createdAt
+        if (b.createdAt) {
+            const date = new Date(b.createdAt);
+            return date.getMonth() === viewMonth && date.getFullYear() === viewYear;
+        }
+
+        return false;
     });
 
     if (existingBudget) {
-        alert(`Budget for ${category} already exists for this month.`);
+        const monthName = new Date(viewYear, viewMonth).toLocaleString('default', { month: 'long' });
+        alert(`A budget for "${category}" already exists for ${monthName} ${viewYear}.`);
         return;
     }
 
@@ -886,21 +961,73 @@ function addBudget(e) {
 }
 
 // Delete transaction
-function deleteTransaction(id) {
-    if (checkGuestAccess()) return;
+async function deleteTransaction(id) {
+    console.log('deleteTransaction called with ID:', id);
+    if (checkGuestAccess()) {
+        console.warn('deleteTransaction blocked by guest access');
+        return;
+    }
+
     if (confirm('Delete this transaction?')) {
         const stringId = String(id);
         const numberId = Number(id);
 
+        console.log('Current transactions count:', transactions.length);
         const initialLength = transactions.length;
-        transactions = transactions.filter(t => t.id !== id && t.id !== stringId && t.id !== numberId);
 
-        if (transactions.length < initialLength) {
+        let shouldRemoveLocally = true;
+
+        // Attempt to delete from backend API if NOT a guest
+        const isGuestUser = isGuest();
+        if (!isGuestUser) {
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                const response = await fetch(`/api/transactions/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    }
+                });
+
+                if (response.ok) {
+                    console.log('Successfully deleted from database');
+                } else if (response.status === 404) {
+                    console.warn('Transaction not found on server, might be local only');
+                } else {
+                    const errorData = await response.json();
+                    console.error('Failed to delete from database:', errorData.message || response.statusText);
+                    alert('Failed to delete from server: ' + (errorData.message || 'Unauthorized or server error'));
+                    shouldRemoveLocally = false;
+                }
+            } catch (error) {
+                console.error('Error calling delete API:', error);
+                alert('Connection error. Could not delete from server.');
+                shouldRemoveLocally = false;
+            }
+        }
+
+        if (shouldRemoveLocally) {
+            console.log('Filtering local state for ID:', id, '(type:', typeof id, ')');
+
+            // Filter the existing array
+            const newTransactions = transactions.filter(t => {
+                // Handle various ID types safely (Number vs String)
+                const isMatch = String(t.id) === stringId || Number(t.id) === numberId || t.id === id;
+                if (isMatch) console.log('Found match to remove:', t);
+                return !isMatch; // Keep if NOT a match
+            });
+
+            const removedCount = transactions.length - newTransactions.length;
+            console.log('Removed', removedCount, 'items from local state');
+
+            // CRITICAL: Update the global variable via the SETTER to trigger updateAll and reactive UI
+            window.transactions = newTransactions;
+
             saveData();
-            updateAll();
             showToast('Transaction deleted!', 'success');
-        } else {
-            alert('Error: Transaction not found!');
+            console.log('Transaction deleted successfully');
         }
     }
 }
@@ -1064,9 +1191,16 @@ function updateTransactionsList() {
     }
 
     if (tableBody) {
-        // If we have a more advanced renderer (like in transactions.js), don't overwrite it
+        // If we have a more advanced renderer (like in transactions.js), call it instead of overwriting
+        if (typeof applyFilters === 'function') {
+            console.log('Handing over table render to applyFilters()');
+            applyFilters();
+            return;
+        }
+
         if (typeof renderTransactionsTable === 'function') {
-            console.log('Handing over table render to page-specific script');
+            console.log('Handing over table render to renderTransactionsTable()');
+            renderTransactionsTable();
             return;
         }
 

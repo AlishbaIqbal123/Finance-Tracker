@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Authentication - FinanceTracker</title>
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -198,6 +199,8 @@
                 <button class="auth-nav-btn" onclick="switchAuth('signup')">Sign Up</button>
             </div>
 
+            <div id="authError" class="alert alert-danger py-2 mb-3 small" style="display: none;"></div>
+
             <!-- Login Form -->
             <div id="loginSection" class="animate-in">
                 <form id="loginForm">
@@ -243,15 +246,13 @@
                         <label class="form-label">Email Address</label>
                         <input type="email" class="form-control" id="signupEmail" placeholder="name@example.com" required>
                     </div>
-                    <div class="mb-4">
+                    <div class="mb-3">
                         <label class="form-label">Password</label>
-                        <input type="password" class="form-control" id="signupPassword" placeholder="Min. 8 characters" required>
+                        <input type="password" class="form-control" id="signupPassword" placeholder="Min. 8 characters" required minlength="8">
                     </div>
-                    <div class="mb-4 form-check">
-                        <input type="checkbox" class="form-check-input" id="terms" required>
-                        <label class="form-check-label small" for="terms" style="color: var(--text-secondary);">
-                            I agree to the <a href="#" class="text-decoration-none text-primary">Terms & Conditions</a>
-                        </label>
+                    <div class="mb-4">
+                        <label class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="signupConfirm" placeholder="Repeat password" required minlength="8">
                     </div>
                     <button type="submit" class="btn btn-primary w-100 shadow-sm">
                         Create Account <i class="bi bi-person-plus ms-2"></i>
@@ -267,6 +268,7 @@
             const loginSection = document.getElementById('loginSection');
             const signupSection = document.getElementById('signupSection');
             const btns = document.querySelectorAll('.auth-nav-btn');
+            document.getElementById('authError').style.display = 'none';
 
             if (type === 'login') {
                 loginSection.style.display = 'block';
@@ -284,45 +286,122 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            // Handle active tab from URL if needed (e.g. ?tab=signup)
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('type') === 'signup' || window.location.pathname.includes('register')) {
                 switchAuth('signup');
             }
 
-            // Demo logic
             document.getElementById('demoAction').addEventListener('click', () => {
                 document.getElementById('loginEmail').value = 'demo@financetracker.com';
                 document.getElementById('loginPassword').value = 'demo123';
             });
 
-            // Form Submissions
-            document.getElementById('loginForm').addEventListener('submit', (e) => {
+            // Login Form Submission
+            document.getElementById('loginForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const email = document.getElementById('loginEmail').value;
+                const password = document.getElementById('loginPassword').value;
+                const errorDiv = document.getElementById('authError');
                 const btn = e.target.querySelector('button[type="submit"]');
+                
+                errorDiv.style.display = 'none';
+                const originalBtnContent = btn.innerHTML;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
                 btn.disabled = true;
 
-                // Save user info for session identity
-                const profileData = { name: email.split('@')[0], email: email };
-                localStorage.setItem('financeTracker_profile', JSON.stringify(profileData));
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const response = await fetch('/login', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({ email, password })
+                    });
 
-                setTimeout(() => window.location.href = "{{ url('/dashboard') }}", 800);
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem('financeTracker_profile', JSON.stringify({ 
+                            name: data.user.name, 
+                            email: data.user.email 
+                        }));
+                        window.location.href = "{{ url('/dashboard') }}";
+                    } else {
+                        btn.disabled = false;
+                        btn.innerHTML = originalBtnContent;
+                        errorDiv.textContent = data.message || 'Login failed.';
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnContent;
+                    errorDiv.textContent = 'Server error occurred.';
+                    errorDiv.style.display = 'block';
+                }
             });
 
-            document.getElementById('signupForm').addEventListener('submit', (e) => {
+            // Signup Form Submission
+            document.getElementById('signupForm').addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const name = document.getElementById('signupName').value;
+                const email = document.getElementById('signupEmail').value;
+                const password = document.getElementById('signupPassword').value;
+                const password_confirmation = document.getElementById('signupConfirm').value;
+                const errorDiv = document.getElementById('authError');
                 const btn = e.target.querySelector('button[type="submit"]');
+                
+                errorDiv.style.display = 'none';
+
+                if (password !== password_confirmation) {
+                    errorDiv.textContent = 'Passwords do not match!';
+                    errorDiv.style.display = 'block';
+                    return;
+                }
+
+                const originalBtnContent = btn.innerHTML;
                 btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
                 btn.disabled = true;
                 
-                // Save name to localStorage for sidebar
-                const profileData = { name: name, email: document.getElementById('signupEmail').value };
-                localStorage.setItem('financeTracker_profile', JSON.stringify(profileData));
-                
-                setTimeout(() => window.location.href = "{{ url('/dashboard') }}", 1000);
+                try {
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                    const response = await fetch('/register', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            email: email,
+                            password: password,
+                            password_confirmation: password_confirmation
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        localStorage.setItem('financeTracker_profile', JSON.stringify({ name: name, email: email }));
+                        window.location.href = "{{ url('/dashboard') }}";
+                    } else {
+                        btn.disabled = false;
+                        btn.innerHTML = originalBtnContent;
+                        errorDiv.textContent = data.message || 'Registration failed.';
+                        if (data.errors) {
+                            errorDiv.textContent = Object.values(data.errors)[0][0];
+                        }
+                        errorDiv.style.display = 'block';
+                    }
+                } catch (err) {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnContent;
+                    errorDiv.textContent = 'Server error occurred.';
+                    errorDiv.style.display = 'block';
+                }
             });
         });
     </script>

@@ -15,16 +15,18 @@ use App\Http\Controllers\Api\TransactionController;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
+Route::middleware('auth')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
 
-// Transaction API routes
-Route::prefix('transactions')->group(function () {
-    Route::get('/', [TransactionController::class, 'index']);           // Get all transactions
-    Route::post('/', [TransactionController::class, 'store']);          // Create a new transaction
-    Route::get('/filter', [TransactionController::class, 'filter']);    // Filter transactions
-    Route::get('/{transaction}', [TransactionController::class, 'show']);        // Get a specific transaction
-    Route::put('/{transaction}', [TransactionController::class, 'update']);      // Update a specific transaction
-    Route::delete('/{transaction}', [TransactionController::class, 'destroy']);  // Delete a specific transaction
+    // Transaction API routes
+    Route::prefix('transactions')->group(function () {
+        Route::get('/', [TransactionController::class, 'index']);           // Get all transactions
+        Route::post('/', [TransactionController::class, 'store']);          // Create a new transaction
+        Route::get('/filter', [TransactionController::class, 'filter']);    // Filter transactions
+        Route::get('/{transaction}', [TransactionController::class, 'show']);        // Get a specific transaction
+        Route::put('/{transaction}', [TransactionController::class, 'update']);      // Update a specific transaction
+        Route::delete('/{transaction}', [TransactionController::class, 'destroy']);  // Delete a specific transaction
+    });
 });

@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Get Started - FinanceTracker</title>
     <!-- Bootstrap & Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -95,7 +96,7 @@
 
         #signupFormSection {
             display: none;
-            max-width: 400px;
+            max-width: 450px;
             margin: 0 auto;
         }
 
@@ -154,8 +155,6 @@
         </button>
     </div>
 
-    <div class="absolute-bg-gradient"></div>
-
     <div class="get-started-card" id="card">
         <!-- Step 1: User Menu Selection -->
         <div id="selectionStep" class="animate-fade-in">
@@ -198,10 +197,17 @@
                     <label class="form-label fw-bold" style="color: var(--text-primary);">Email</label>
                     <input type="email" class="form-control p-3" id="email" placeholder="name@example.com" required>
                 </div>
-                <div class="mb-4 text-start">
-                    <label class="form-label fw-bold" style="color: var(--text-primary);">Password</label>
-                    <input type="password" class="form-control p-3" id="password" placeholder="Min. 8 characters" required>
+                <div class="row">
+                    <div class="col-md-6 mb-3 text-start">
+                        <label class="form-label fw-bold" style="color: var(--text-primary);">Password</label>
+                        <input type="password" class="form-control p-3" id="password" placeholder="Min. 8 char" required minlength="8">
+                    </div>
+                    <div class="col-md-6 mb-4 text-start">
+                        <label class="form-label fw-bold" style="color: var(--text-primary);">Confirm</label>
+                        <input type="password" class="form-control p-3" id="password_confirmation" placeholder="Repeat it" required minlength="8">
+                    </div>
                 </div>
+                <div id="registerError" class="alert alert-danger py-2 mb-3 small" style="display: none;"></div>
                 <button type="submit" class="btn btn-primary w-100 py-3 shadow">
                     Complete Setup <i class="bi bi-check2-circle ms-2"></i>
                 </button>
@@ -216,7 +222,7 @@
             document.getElementById('signupFormSection').style.display = 'block';
             document.getElementById('signupFormSection').classList.add('animate-fade-in');
             document.getElementById('contextText').textContent = 'Let\'s set up your account to ' + goal;
-            document.getElementById('card').style.maxWidth = '500px';
+            document.getElementById('card').style.maxWidth = '550px';
         }
 
         function backToMenu() {
@@ -225,52 +231,68 @@
             document.getElementById('card').style.maxWidth = '800px';
         }
 
-        document.getElementById('signupFormEntry').addEventListener('submit', (e) => {
+        document.getElementById('signupFormEntry').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('fullname').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const password_confirmation = document.getElementById('password_confirmation').value;
+            const errorDiv = document.getElementById('registerError');
+            
+            errorDiv.style.display = 'none';
+
+            // Client-side validation
+            if (password !== password_confirmation) {
+                errorDiv.textContent = 'Passwords do not match!';
+                errorDiv.style.display = 'block';
+                return;
+            }
+
             const btn = e.target.querySelector('button');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Preparing your dashboard...';
+            const originalBtnContent = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating your account...';
             btn.disabled = true;
 
-            // Save name for profile
-            localStorage.setItem('financeTracker_profile', JSON.stringify({ name: name, email: document.getElementById('email').value }));
+            try {
+                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+                const response = await fetch('/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        email: email,
+                        password: password,
+                        password_confirmation: password_confirmation
+                    })
+                });
 
-            setTimeout(() => {
-                window.location.href = "{{ url('/dashboard') }}";
-            }, 1200);
-        });
-    </script>
-</body>
-</html>
+                const data = await response.json();
 
-    <script>
-        function toSignup(goal) {
-            document.getElementById('selectionStep').style.display = 'none';
-            document.getElementById('signupFormSection').style.display = 'block';
-            document.getElementById('signupFormSection').classList.add('animate-fade-in');
-            document.getElementById('contextText').textContent = 'Let\'s set up your account to ' + goal;
-            document.getElementById('card').style.maxWidth = '500px';
-        }
-
-        function backToMenu() {
-            document.getElementById('selectionStep').style.display = 'block';
-            document.getElementById('signupFormSection').style.display = 'none';
-            document.getElementById('card').style.maxWidth = '800px';
-        }
-
-        document.getElementById('signupFormEntry').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const name = document.getElementById('fullname').value;
-            const btn = e.target.querySelector('button');
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Preparing your dashboard...';
-            btn.disabled = true;
-
-            // Save name for profile
-            localStorage.setItem('financeTracker_profile', JSON.stringify({ name: name, email: document.getElementById('email').value }));
-
-            setTimeout(() => {
-                window.location.href = "{{ url('/dashboard') }}";
-            }, 1200);
+                if (response.ok) {
+                    // Save info for legacy JS components
+                    localStorage.setItem('financeTracker_profile', JSON.stringify({ name: name, email: email }));
+                    window.location.href = "{{ url('/dashboard') }}";
+                } else {
+                    btn.disabled = false;
+                    btn.innerHTML = originalBtnContent;
+                    errorDiv.textContent = data.message || 'Registration failed. Please try again.';
+                    if (data.errors) {
+                        const firstError = Object.values(data.errors)[0][0];
+                        errorDiv.textContent = firstError;
+                    }
+                    errorDiv.style.display = 'block';
+                }
+            } catch (err) {
+                btn.disabled = false;
+                btn.innerHTML = originalBtnContent;
+                errorDiv.textContent = 'A server error occurred. Please try again.';
+                errorDiv.style.display = 'block';
+                console.error('Registration error:', err);
+            }
         });
     </script>
 </body>

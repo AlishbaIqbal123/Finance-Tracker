@@ -83,34 +83,45 @@ function updateAnalytics() {
 }
 
 function getFilteredTransactions() {
-    console.log(`Filtering for: ${currentTimePeriod}, total data points: ${analyticsTransactions.length}`);
-
-    // Always work on up-to-date data
-    if (window.transactions && window.transactions.length > analyticsTransactions.length) {
+    // Always sync with the most current data source
+    if (typeof window.transactions !== 'undefined' && window.transactions) {
         analyticsTransactions = [...window.transactions];
     }
 
+    console.log(`Filtering for: ${currentTimePeriod}, total data points: ${analyticsTransactions.length}`);
+
     const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
+    // Normalize to midnight today for cleaner day-based comparisons
+    const todayMidnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
     return analyticsTransactions.filter(t => {
-        if (!t.date) return false;
+        if (!t || !t.date) return false;
+
+        // Parse date - usually YYYY-MM-DD
         const tDate = new Date(t.date);
         if (isNaN(tDate.getTime())) return false;
 
+        // Strip time from transaction date for clean comparison
+        const itemDateMidnight = new Date(tDate.getFullYear(), tDate.getMonth(), tDate.getDate());
+
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
         if (currentTimePeriod === 'week') {
-            const weekAgo = new Date(now);
-            weekAgo.setDate(now.getDate() - 7);
-            return tDate >= weekAgo;
+            const weekAgo = new Date(todayMidnight);
+            weekAgo.setDate(todayMidnight.getDate() - 7);
+            // From 7 days ago 00:00 until end of today
+            return itemDateMidnight >= weekAgo;
         } else if (currentTimePeriod === 'month') {
-            return tDate.getMonth() === currentMonth && tDate.getFullYear() === currentYear;
+            // Must be current calendar month
+            return itemDateMidnight.getMonth() === currentMonth && itemDateMidnight.getFullYear() === currentYear;
         } else if (currentTimePeriod === 'year') {
-            // Include everything from the CURRENT calendar year.
-            return tDate.getFullYear() === currentYear;
+            // Must be current year
+            return itemDateMidnight.getFullYear() === currentYear;
         } else if (currentTimePeriod === 'all') {
             return true;
         }
+
         return true;
     });
 }
@@ -167,7 +178,8 @@ function renderCategoryChart(filteredTransactions) {
     const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
     const categorySpending = {};
     expenseTransactions.forEach(t => {
-        categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
+        const amt = Number(t.amount) || 0;
+        categorySpending[t.category] = (categorySpending[t.category] || 0) + amt;
     });
 
     const labels = Object.keys(categorySpending);
@@ -375,7 +387,8 @@ function renderCategoryDetails(filteredTransactions) {
     const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
     const categorySpending = {};
     expenseTransactions.forEach(t => {
-        categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount;
+        const amt = Number(t.amount) || 0;
+        categorySpending[t.category] = (categorySpending[t.category] || 0) + amt;
     });
 
     const totalExpenses = Object.values(categorySpending).reduce((a, b) => a + b, 0);
@@ -389,14 +402,40 @@ function renderCategoryDetails(filteredTransactions) {
 
     const html = sorted.map(([cat, amount]) => {
         const pct = (amount / totalExpenses * 100).toFixed(1);
+
+        // Find if there's a budget for this category (Monthly budget search)
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        const budget = (window.budgets || []).find(b =>
+            b.category === cat &&
+            (b.month === currentMonth || b.month === undefined) // Simple match
+        );
+
+        let budgetText = '';
+        let barColor = 'bg-primary';
+
+        if (budget) {
+            const limit = Number(budget.amount);
+            const usage = (amount / limit * 100).toFixed(0);
+            budgetText = `<span class="small ms-2 ${amount > limit ? 'text-danger fw-bold' : 'text-muted'}">(${usage}% of ${formatMoney(limit)} budget)</span>`;
+            if (amount > limit) barColor = 'bg-danger';
+            else if (usage > 80) barColor = 'bg-warning';
+        }
+
         return `
-            <div class="mb-3">
-                <div class="d-flex justify-content-between mb-1">
-                    <span class="fw-medium">${cat}</span>
-                    <span class="text-muted">${formatMoney(amount)} (${pct}%)</span>
+            <div class="mb-4">
+                <div class="d-flex justify-content-between align-items-end mb-1">
+                    <div>
+                        <span class="fw-bold text-dark d-block">${cat}</span>
+                        <span class="text-muted small">${pct}% of total spending</span>
+                    </div>
+                    <div class="text-end">
+                        <span class="fw-bold text-dark">${formatMoney(amount)}</span>
+                        ${budgetText}
+                    </div>
                 </div>
-                <div class="progress" style="height: 6px;">
-                    <div class="progress-bar bg-primary" style="width: ${pct}%"></div>
+                <div class="progress" style="height: 10px; border-radius: 10px;">
+                    <div class="progress-bar ${barColor} animate__animated animate__slideInLeft" style="width: ${Math.min(pct > 0 ? (budget ? (amount / budget.amount * 100) : pct) : 0, 100)}%"></div>
                 </div>
             </div>
         `;

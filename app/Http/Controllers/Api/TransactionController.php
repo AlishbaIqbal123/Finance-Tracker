@@ -78,8 +78,18 @@ class TransactionController extends Controller
      */
     public function destroy(Transaction $transaction)
     {
+        \Log::info('Transaction delete request received', [
+            'transaction_id' => $transaction->id,
+            'user_id' => auth()->id(),
+            'owner_id' => $transaction->user_id
+        ]);
+
         // Ensure the authenticated user owns this transaction
         if ($transaction->user_id !== auth()->id()) {
+            \Log::warning('Unauthorized delete attempt', [
+                'transaction_id' => $transaction->id,
+                'user_id' => auth()->id()
+            ]);
             return response()->json([
                 'message' => 'Unauthorized to delete this transaction'
             ], 403);
@@ -87,6 +97,8 @@ class TransactionController extends Controller
         
         $transaction->delete();
         
+        \Log::info('Transaction deleted successfully', ['transaction_id' => $transaction->id]);
+
         return response()->json([
             'message' => 'Transaction deleted successfully'
         ]);
