@@ -39,9 +39,7 @@ RUN composer install --no-dev --optimize-autoloader
 # Set permissions
 RUN chown -R www-data:www-data storage bootstrap/cache
 
-# Production optimization
-RUN php artisan config:cache
-RUN php artisan route:cache
+# Production optimization (Removing config:cache as it blocks runtime ENV variables)
 RUN php artisan view:cache
 
 # Update Apache to listen on the port provided by Koyeb
@@ -50,8 +48,9 @@ RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/a
 # Add ServerName to suppress Apache warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 
-# Expose port (Koyeb uses $PORT)
+# Expose port
 EXPOSE 80
 
-# Start script
-CMD php artisan migrate --force; sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && apache2-foreground
+# Start script - We run migrations and then start Apache
+# We also clear any old config cache just in case
+CMD php artisan config:clear; php artisan migrate --force; sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && apache2-foreground
