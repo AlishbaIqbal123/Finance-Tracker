@@ -7,6 +7,8 @@ RUN apt-get update && apt-get install -y \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
     libzip-dev \
+    libxml2-dev \
+    libonig-dev \
     zip \
     unzip \
     git \
@@ -16,7 +18,7 @@ RUN apt-get update && apt-get install -y \
 RUN apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # Install PHP extensions
-RUN docker-php-ext-install pdo_mysql gd zip
+RUN docker-php-ext-install pdo_mysql gd zip mbstring bcmath xml
 
 # Enable Apache ModRewrite
 RUN a2enmod rewrite
@@ -37,13 +39,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 RUN composer install --no-dev --optimize-autoloader
 
 # Set permissions
-RUN chown -R www-data:www-data storage bootstrap/cache
+RUN chown -R www-data:www-data storage bootstrap/cache && \
+    chmod -R 775 storage bootstrap/cache
 
-# Production optimization (Removing config:cache as it blocks runtime ENV variables)
+# Production optimization
 RUN php artisan view:cache
-
-# Update Apache to listen on the port provided by Koyeb
-RUN sed -i 's/80/${PORT}/g' /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf
 
 # Add ServerName to suppress Apache warning
 RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
@@ -51,6 +51,8 @@ RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf
 # Expose port
 EXPOSE 80
 
-# Start script - We run migrations and then start Apache
-# We also clear any old config cache just in case
-CMD php artisan config:clear; php artisan migrate --force; sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && apache2-foreground
+# Start script
+CMD php artisan config:clear; \
+    php artisan migrate --force; \
+    sed -i "s/80/$PORT/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && \
+    apache2-foreground
