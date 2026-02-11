@@ -48,4 +48,4 @@ RUN php artisan view:cache
 EXPOSE 80
 
 # Start script
-CMD php artisan migrate --force && apache2-foreground
+CMD php artisan migrate --force; apache2-foreground
