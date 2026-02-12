@@ -19,6 +19,14 @@
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
     <script src="{{ asset('js/theme.js') }}"></script>
     @stack('styles')
+    <style>
+        .hover-bg-light:hover {
+            background-color: rgba(0,0,0,0.05);
+        }
+        [data-theme="dark"] .hover-bg-light:hover {
+            background-color: rgba(255,255,255,0.05);
+        }
+    </style>
 </head>
 <body>
     <!-- Sidebar Overlay -->
@@ -31,52 +39,63 @@
         @endunless
         
         <!-- Main Content -->
-        <div class="main-content" @if(request()->is('/') || request()->is('welcome') || request()->is('login') || request()->is('register')) style="margin-left: 0; padding: 0;" @endif>
+        <div class="main-content" @if(request()->is('/') || request()->is('welcome') || request()->is('login') || request()->is('register')) style="margin-left: 0;" @endif>
             
             @unless(request()->is('/') || request()->is('welcome') || request()->is('login') || request()->is('register'))
             <!-- Dashboard Header -->
-            <nav class="navbar navbar-expand py-2 py-md-3 mb-4 sticky-top">
-                <div class="container-fluid px-2 px-md-4">
+            <nav class="navbar navbar-expand border-start-0">
+                <div class="container-fluid px-3 px-md-4">
                     <div class="d-flex align-items-center flex-grow-1 flex-md-grow-0">
                         <!-- Hamburger Menu for Tablet/Medium Screens -->
                         <button class="btn btn-link text-decoration-none p-0 me-3 d-lg-none sidebar-toggle" id="sidebarToggleNavbar" type="button">
-                            <i class="bi bi-list fs-3" style="color: var(--text-color);"></i>
+                            <i class="bi bi-list fs-3 theme-text"></i>
                         </button>
-                        <h4 class="mb-0 fw-bold fs-5 fs-md-4">@yield('page_title', 'Overview')</h4>
+                        <h4 class="mb-0 mt-0 fw-bold theme-text fs-5 fs-md-4">@yield('page_title', 'Overview')</h4>
                     </div>
                     
-                    <div class="d-flex align-items-center gap-2 gap-md-3">
-                         <!-- Theme Toggle -->
-                         <button class="btn btn-theme-toggle rounded-circle p-2" onclick="toggleTheme()" title="Toggle Theme">
+                    <div class="d-flex align-items-center gap-2 gap-md-3" style="overflow: visible !important;">
+                         <!-- Theme Toggle (Desktop Only) -->
+                         <button class="btn btn-theme-toggle rounded-circle p-2 d-none d-md-flex align-items-center justify-content-center" onclick="toggleTheme()" title="Toggle Theme">
                              <i class="bi bi-moon theme-icon"></i>
                          </button>
                          
-                         <!-- User Profile Dropdown -->
-                         <div class="dropdown">
-                            <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle theme-text" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-                                <div class="text-white rounded-circle d-flex align-items-center justify-content-center me-0 me-sm-2" style="width: 36px; height: 36px; background: var(--primary);">
-                                    <i class="bi bi-person-fill fs-5"></i>
-                                </div>
-                                <span class="d-none d-sm-inline fw-semibold" id="headerUserName">User</span>
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0" aria-labelledby="dropdownUser1">
-                                <li><a class="dropdown-item" href="{{ url('/profile') }}"><i class="bi bi-person me-2"></i>Profile</a></li>
-                                <li><a class="dropdown-item" href="{{ url('/settings') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form method="POST" action="{{ route('logout') }}" id="logout-form">
-                                        @csrf
-                                        <button type="submit" class="dropdown-item text-danger"><i class="bi bi-box-arrow-right me-2"></i>Sign out</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </div>
+             <!-- User Profile Dropdown -->
+             <div class="dropdown me-1" style="overflow: visible !important;">
+                <a href="#" class="d-flex align-items-center text-decoration-none dropdown-toggle theme-text ps-1 pe-3 py-1 rounded-pill hover-scale" 
+                   id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false" style="background: rgba(var(--primary-rgb, 214, 51, 132), 0.05); border: 1px solid rgba(var(--primary-rgb, 214, 51, 132), 0.1);">
+                    <div class="user-avatar-initials text-white rounded-circle d-flex align-items-center justify-content-center shadow-sm" 
+                         style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--primary), var(--primary-hover)); margin-right: 10px;">
+                        <i class="bi bi-person-fill fs-6"></i>
+                    </div>
+                    <span class="d-none d-sm-inline fw-bold me-1" id="headerUserName" style="font-size: 0.9rem; color: var(--primary);">User</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end shadow-lg border-0" aria-labelledby="dropdownUser1">
+                    <li class="px-3 py-2 border-bottom d-sm-none">
+                        <span class="fw-bold d-block">User</span>
+                        <small class="text-muted">Account</small>
+                    </li>
+                    <li><h6 class="dropdown-header">Manage Account</h6></li>
+                    <li><a class="dropdown-item" href="{{ url('/profile') }}"><i class="bi bi-person me-2"></i>My Profile</a></li>
+                    <li><a class="dropdown-item" href="{{ url('/settings') }}"><i class="bi bi-gear me-2"></i>Settings</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li>
+                        <form method="POST" action="{{ route('logout') }}" id="logout-form">
+                            @csrf
+                            <button type="submit" class="dropdown-item text-danger d-flex align-items-center">
+                                <i class="bi bi-box-arrow-right me-2"></i>Sign out
+                            </button>
+                        </form>
+                    </li>
+                </ul>
+            </div>
                     </div>
                 </div>
             </nav>
             @endunless
 
-            @yield('content')
+            <div class="@unless(request()->is('/') || request()->is('welcome') || request()->is('login') || request()->is('register')) content-body @endunless">
+                @yield('content')
+            </div>
         </div>
     </div>
 
@@ -272,6 +291,23 @@
                     });
                 });
             }
+        });
+        // Initialize Dropdowns manually as a fallback
+        document.addEventListener('DOMContentLoaded', function() {
+            // Standard Bootstrap initialization
+            var dropdownElementList = [].slice.call(document.querySelectorAll('[data-bs-toggle="dropdown"]'))
+            var dropdownList = dropdownElementList.map(function (dropdownToggleEl) {
+                return new bootstrap.Dropdown(dropdownToggleEl)
+            });
+
+            // Ensure dropdowns close when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.dropdown')) {
+                    document.querySelectorAll('.dropdown-menu.show').forEach(menu => {
+                        menu.classList.remove('show');
+                    });
+                }
+            });
         });
     </script>
     @stack('scripts')

@@ -1,5 +1,7 @@
-import { formatCurrency, formatDate } from './utils.js';
-import { store } from './store.js';
+/**
+ * FinanceTracker - Transactions Page Implementation
+ * Robust filtering, search, and pagination for transaction records
+ */
 
 let filteredTransactions = [];
 let currentPage = 1;
@@ -12,26 +14,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 });
 
-async function initializeTransactionsPage() {
+function initializeTransactionsPage() {
+    console.log('Initializing Transactions Page...');
+
+    // Ensure we have data
+    if (typeof window.transactions === 'undefined' || !window.transactions) {
+        window.transactions = [];
+    }
+
     try {
-        // Subscribe to store changes
-        store.subscribe((state) => {
-            transactions = state.transactions;
-            populateCategoryFilter();
-            applyFilters();
-        });
-
-        // Load initial data
-        await store.loadFromAPI();
-        transactions = store.state.transactions;
-
         setupTransactionFilters();
         populateCategoryFilter();
-        renderTransactionsTable();
-        setupTransactionSearch();
+        applyFilters();
     } catch (error) {
-        console.error('Failed to load transactions:', error);
-        showToast('Failed to load transactions', 'error');
+        console.error('Failed to initialize transactions:', error);
     }
 }
 
@@ -40,15 +36,22 @@ function setupTransactionFilters() {
     const categoryFilter = document.getElementById('categoryFilter');
     const monthFilter = document.getElementById('monthFilter');
     const amountFilter = document.getElementById('amountFilter');
+    const searchInput = document.getElementById('transactionSearch');
 
-    if (typeFilter) typeFilter.addEventListener('change', applyFilters);
-    if (categoryFilter) categoryFilter.addEventListener('change', applyFilters);
-    if (monthFilter) monthFilter.addEventListener('change', applyFilters);
-    if (amountFilter) amountFilter.addEventListener('change', applyFilters);
+    if (typeFilter) typeFilter.addEventListener('change', () => applyFilters());
+    if (categoryFilter) categoryFilter.addEventListener('change', () => applyFilters());
+    if (monthFilter) monthFilter.addEventListener('change', () => applyFilters());
+    if (amountFilter) amountFilter.addEventListener('change', () => applyFilters());
+    if (searchInput) {
+        searchInput.addEventListener('input', () => {
+            // Debounce or at least trigger on input
+            applyFilters();
+        });
+    }
 
-    // Set default month to current month
-    if (monthFilter) {
-        monthFilter.value = new Date().toISOString().slice(0, 7);
+    // Set default month to current month if filter is empty
+    if (monthFilter && !monthFilter.value) {
+        // monthFilter.value = new Date().toISOString().slice(0, 7);
     }
 }
 
@@ -56,34 +59,29 @@ function populateCategoryFilter() {
     const categoryFilter = document.getElementById('categoryFilter');
     if (!categoryFilter) return;
 
-    const categories = [...new Set(transactions.map(t => t.category))].sort();
+    const transactions = window.transactions || [];
+    const categories = [...new Set(transactions.map(t => t.category))].filter(Boolean).sort();
 
+    const currentVal = categoryFilter.value;
     categoryFilter.innerHTML = '<option value="">All Categories</option>';
     categories.forEach(category => {
         const option = document.createElement('option');
         option.value = category;
         option.textContent = category;
+        if (category === currentVal) option.selected = true;
         categoryFilter.appendChild(option);
     });
 }
 
-function setupTransactionSearch() {
-    const searchInput = document.getElementById('transactionSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', function (e) {
-            const searchTerm = e.target.value.toLowerCase();
-            applyFilters(searchTerm);
-        });
-    }
-}
-
-function applyFilters(searchTerm = '') {
+function applyFilters() {
     const typeFilter = document.getElementById('typeFilter')?.value || '';
     const categoryFilter = document.getElementById('categoryFilter')?.value || '';
     const monthFilter = document.getElementById('monthFilter')?.value || '';
     const amountFilter = document.getElementById('amountFilter')?.value || '';
     const searchInput = document.getElementById('transactionSearch');
-    const actualSearchTerm = searchTerm || (searchInput ? searchInput.value.toLowerCase() : '');
+    const searchTerm = searchInput ? searchInput.value.toLowerCase() : '';
+
+    const transactions = window.transactions || [];
 
     filteredTransactions = transactions.filter(transaction => {
         // Type filter
@@ -93,31 +91,23 @@ function applyFilters(searchTerm = '') {
         if (categoryFilter && transaction.category !== categoryFilter) return false;
 
         // Month filter
-        if (monthFilter && transaction.date.slice(0, 7) !== monthFilter) return false;
+        if (monthFilter && transaction.date && !transaction.date.startsWith(monthFilter)) return false;
 
         // Amount filter
         if (amountFilter) {
-            const amount = transaction.amount;
+            const amount = Number(transaction.amount) || 0;
             switch (amountFilter) {
-                case '0-50':
-                    if (amount > 50) return false;
-                    break;
-                case '50-100':
-                    if (amount <= 50 || amount > 100) return false;
-                    break;
-                case '100-500':
-                    if (amount <= 100 || amount > 500) return false;
-                    break;
-                case '500+':
-                    if (amount <= 500) return false;
-                    break;
+                case '0-50': if (amount > 50) return false; break;
+                case '50-100': if (amount <= 50 || amount > 100) return false; break;
+                case '100-500': if (amount <= 100 || amount > 500) return false; break;
+                case '500+': if (amount <= 500) return false; break;
             }
         }
 
         // Search filter
-        if (actualSearchTerm) {
-            const searchableText = `${transaction.title} ${transaction.description} ${transaction.category}`.toLowerCase();
-            if (!searchableText.includes(actualSearchTerm)) return false;
+        if (searchTerm) {
+            const searchableText = `${transaction.title} ${transaction.description || ''} ${transaction.category}`.toLowerCase();
+            if (!searchableText.includes(searchTerm)) return false;
         }
 
         return true;
@@ -125,291 +115,234 @@ function applyFilters(searchTerm = '') {
 
     currentPage = 1;
     renderTransactionsTable();
-    renderPagination();
 }
 
 function renderTransactionsTable() {
     const tbody = document.getElementById('transactionsTableBody');
     if (!tbody) return;
 
-    // Use filtered transactions or all transactions
-    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
-        filteredTransactions : transactions;
-
-    if (transactionsToShow.length === 0) {
+    if (filteredTransactions.length === 0) {
         tbody.innerHTML = `
             <tr>
-                <td colspan="6" class="text-center py-4">
-                    <div class="empty-state">
-                        <i class="bi bi-receipt fs-1 text-muted"></i>
-                        <h5 class="mt-2">No transactions found</h5>
-                        <p class="text-muted">Try adjusting your filters or add your first transaction</p>
+                <td colspan="6" class="text-center py-5">
+                    <div class="text-muted">
+                        <i class="bi bi-receipt fs-1 d-block mb-2 opacity-50"></i>
+                        <h5>No transactions found</h5>
+                        <p class="small">Try adjusting your filters or add a new record.</p>
                     </div>
                 </td>
             </tr>
         `;
+        renderPagination(0);
         return;
     }
+
+    // Sort by date descending
+    const sorted = [...filteredTransactions].sort((a, b) => new Date(b.date) - new Date(a.date));
 
     // Pagination
     const startIndex = (currentPage - 1) * transactionsPerPage;
     const endIndex = startIndex + transactionsPerPage;
-    const paginatedTransactions = transactionsToShow.slice(startIndex, endIndex);
+    const paginated = sorted.slice(startIndex, endIndex);
 
-    tbody.innerHTML = paginatedTransactions.map(transaction => `
+    tbody.innerHTML = paginated.map(t => `
         <tr>
-            <td>${formatDate(transaction.date)}</td>
+            <td class="ps-3">
+                <div class="fw-bold">${window.formatDate ? window.formatDate(t.date) : t.date}</div>
+                <small class="text-muted d-md-none">${t.category}</small>
+            </td>
             <td>
-                <div class="fw-medium">${transaction.title}</div>
+                <div class="fw-semibold">${t.title}</div>
+                <div class="text-truncate text-muted small d-none d-md-block" style="max-width: 250px;">${t.description || ''}</div>
             </td>
             <td class="d-none d-md-table-cell">
-                <span class="badge bg-secondary-soft">${transaction.category}</span>
+                <span class="badge bg-secondary-soft text-dark border">${t.category}</span>
             </td>
             <td>
-                <span class="badge ${transaction.type === 'income' ? 'bg-success-soft' : 'bg-danger-soft'}">
-                    ${transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1)}
+                <span class="badge ${t.type === 'income' ? 'bg-success-soft text-success' : 'bg-danger-soft text-danger'} px-2 py-1">
+                    ${t.type.charAt(0).toUpperCase() + t.type.slice(1)}
                 </span>
             </td>
             <td class="text-end">
-                <span class="fw-bold ${transaction.type === 'income' ? 'text-success' : 'text-danger'}">
-                    ${transaction.type === 'income' ? '+' : '-'}${formatCurrency(transaction.amount)}
+                <span class="fw-bold ${t.type === 'income' ? 'text-success' : 'text-danger'}">
+                    ${t.type === 'income' ? '+' : '-'}${window.formatMoney ? window.formatMoney(t.amount) : t.amount}
                 </span>
             </td>
-            <td class="text-center">
-                <div class="btn-group btn-group-sm">
-                    <button class="btn btn-outline-primary" onclick="editTransaction(${transaction.id})" title="Edit">
-                        <i class="bi bi-pencil"></i>
+            <td class="text-end pe-3">
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-light border" data-bs-toggle="dropdown">
+                        <i class="bi bi-three-dots"></i>
                     </button>
-                    <button class="btn btn-outline-danger" onclick="deleteTransaction(${transaction.id})" title="Delete">
-                        <i class="bi bi-trash"></i>
-                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow-sm border-0">
+                        <li><a class="dropdown-item" href="#" onclick="editTransaction(${t.id})"><i class="bi bi-pencil me-2"></i>Edit</a></li>
+                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteTransaction(${t.id})"><i class="bi bi-trash me-2"></i>Delete</a></li>
+                    </ul>
                 </div>
             </td>
         </tr>
     `).join('');
 
-    renderPagination();
+    renderPagination(filteredTransactions.length);
 }
 
-function renderPagination() {
+function renderPagination(totalItems) {
     const pagination = document.getElementById('transactionsPagination');
     if (!pagination) return;
 
-    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
-        filteredTransactions : transactions;
-
-    const totalPages = Math.ceil(transactionsToShow.length / transactionsPerPage);
-
+    const totalPages = Math.ceil(totalItems / transactionsPerPage);
     if (totalPages <= 1) {
         pagination.innerHTML = '';
         return;
     }
 
-    let paginationHTML = '';
-
-    // Previous button
-    paginationHTML += `
+    let html = `
         <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage - 1})">Previous</a>
+            <a class="page-link" href="#" onclick="window.changePage(${currentPage - 1}); return false;">
+                <i class="bi bi-chevron-left"></i>
+            </a>
         </li>
     `;
 
-    // Page numbers
     for (let i = 1; i <= totalPages; i++) {
-        if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
-            paginationHTML += `
+        if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+            html += `
                 <li class="page-item ${i === currentPage ? 'active' : ''}">
-                    <a class="page-link" href="#" onclick="changePage(${i})">${i}</a>
+                    <a class="page-link" href="#" onclick="window.changePage(${i}); return false;">${i}</a>
                 </li>
             `;
-        } else if (i === currentPage - 3 || i === currentPage + 3) {
-            paginationHTML += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+        } else if (i === currentPage - 2 || i === currentPage + 2) {
+            html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
         }
     }
 
-    // Next button
-    paginationHTML += `
+    html += `
         <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
-            <a class="page-link" href="#" onclick="changePage(${currentPage + 1})">Next</a>
+            <a class="page-link" href="#" onclick="window.changePage(${currentPage + 1}); return false;">
+                <i class="bi bi-chevron-right"></i>
+            </a>
         </li>
     `;
 
-    pagination.innerHTML = paginationHTML;
+    pagination.innerHTML = html;
 }
 
-function changePage(page) {
-    const transactionsToShow = filteredTransactions.length > 0 || hasActiveFilters() ?
-        filteredTransactions : transactions;
-    const totalPages = Math.ceil(transactionsToShow.length / transactionsPerPage);
-
+window.changePage = function (page) {
+    const totalPages = Math.ceil(filteredTransactions.length / transactionsPerPage);
     if (page < 1 || page > totalPages) return;
-
     currentPage = page;
     renderTransactionsTable();
-}
+};
 
-function hasActiveFilters() {
-    const typeFilter = document.getElementById('typeFilter')?.value || '';
-    const categoryFilter = document.getElementById('categoryFilter')?.value || '';
-    const monthFilter = document.getElementById('monthFilter')?.value || '';
-    const amountFilter = document.getElementById('amountFilter')?.value || '';
-    const searchInput = document.getElementById('transactionSearch')?.value || '';
-
-    return typeFilter || categoryFilter || monthFilter || amountFilter || searchInput;
-}
-
+// Handle Transaction Modal logic
 function editTransaction(id) {
-    const transaction = transactions.find(t => t.id === id);
-    if (!transaction) return;
+    const transactions = window.transactions || [];
+    const t = transactions.find(item => String(item.id) === String(id));
+    if (!t) return;
 
-    // Populate edit form
-    document.getElementById('editTransactionId').value = transaction.id;
-    document.getElementById('editTitle').value = transaction.title;
-    document.getElementById('editAmount').value = transaction.amount;
-    document.getElementById('editType').value = transaction.type;
-    document.getElementById('editDescription').value = transaction.description;
-    document.getElementById('editCategory').value = transaction.category;
-    document.getElementById('editDate').value = transaction.date;
+    // Fill form
+    const idInput = document.getElementById('editTransactionId');
+    const titleInput = document.getElementById('editTitle');
+    const amountInput = document.getElementById('editAmount');
+    const typeSelect = document.getElementById('editType');
+    const catSelect = document.getElementById('editCategory');
+    const descText = document.getElementById('editDescription');
+    const dateInput = document.getElementById('editDate');
 
-    // Populate category dropdown based on transaction type
-    const editCategorySelect = document.getElementById('editCategory');
-    const categories = transaction.type === 'income' ?
-        ['Salary', 'Freelance', 'Investment', 'Business', 'Other'] :
-        ['Food', 'Transportation', 'Shopping', 'Bills', 'Entertainment', 'Healthcare', 'Education', 'Other'];
+    if (idInput) idInput.value = t.id;
+    if (titleInput) titleInput.value = t.title;
+    if (amountInput) amountInput.value = t.amount;
+    if (typeSelect) {
+        typeSelect.value = t.type;
+        // Trigger category update
+        populateEditCategories(t.type, t.category);
+    }
+    if (descText) descText.value = t.description || '';
+    if (dateInput) dateInput.value = t.date;
 
-    // Always populate the category dropdown with appropriate categories
-    editCategorySelect.innerHTML = categories.map(cat =>
-        `<option value="${cat}" ${cat === transaction.category ? 'selected' : ''}>${cat}</option>`
-    ).join('');
-
-    // Show modal using custom implementation
-    showModal('editTransactionModal');
+    if (typeof window.showModal === 'function') {
+        window.showModal('editTransactionModal');
+    }
 }
 
-async function updateTransaction() {
-    const id = parseInt(document.getElementById('editTransactionId').value);
-    const title = document.getElementById('editTitle').value;
-    const amount = parseFloat(document.getElementById('editAmount').value);
-    const type = document.getElementById('editType').value;
-    const description = document.getElementById('editDescription').value;
-    const category = document.getElementById('editCategory').value;
-    const date = document.getElementById('editDate').value;
+function populateEditCategories(type, selectedCategory = '') {
+    const catSelect = document.getElementById('editCategory');
+    if (!catSelect) return;
 
-    if (!title || !amount || !description || !category || !date) {
-        showToast('Please fill in all fields', 'error');
+    const incomeCats = ['Salary', 'Freelance', 'Investment', 'Business', 'Bonus', 'Other'];
+    const expenseCats = ['Food', 'Transportation', 'Shopping', 'Bills', 'Entertainment', 'Healthcare', 'Travel', 'Other'];
+
+    const cats = (type === 'income') ? incomeCats : expenseCats;
+    catSelect.innerHTML = cats.map(c => `<option value="${c}" ${c === selectedCategory ? 'selected' : ''}>${c}</option>`).join('');
+}
+
+// Attach listener to type change in edit modal
+document.addEventListener('change', (e) => {
+    if (e.target && e.target.id === 'editType') {
+        populateEditCategories(e.target.value);
+    }
+});
+
+// Update function - calls API then refreshes
+window.updateTransaction = async function () {
+    const id = document.getElementById('editTransactionId').value;
+    const data = {
+        title: document.getElementById('editTitle').value,
+        amount: parseFloat(document.getElementById('editAmount').value),
+        type: document.getElementById('editType').value,
+        category: document.getElementById('editCategory').value,
+        description: document.getElementById('editDescription').value,
+        date: document.getElementById('editDate').value
+    };
+
+    if (!data.title || isNaN(data.amount)) {
+        alert('Please enter valid title and amount');
         return;
     }
 
     try {
-        // Update transaction via store
-        const transactionData = {
-            title: title,
-            amount: amount,
-            type: type,
-            description: description,
-            category: category,
-            date: date
-        };
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+        const response = await fetch(`/api/transactions/${id}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+                'X-CSRF-TOKEN': csrfToken
+            },
+            body: JSON.stringify(data)
+        });
 
-        await store.updateTransaction(id, transactionData);
+        if (response.ok) {
+            const result = await response.json();
+            // Update local state
+            const idx = window.transactions.findIndex(t => String(t.id) === String(id));
+            if (idx !== -1) {
+                window.transactions[idx] = result.data;
+                // Reactive update
+                window.transactions = [...window.transactions];
+            }
 
-        // Close modal using custom implementation
-        hideModal('editTransactionModal');
+            if (typeof window.hideModal === 'function') window.hideModal('editTransactionModal');
+            if (typeof window.showToast === 'function') window.showToast('Transaction updated!', 'success');
 
-        showToast('Transaction updated successfully!', 'success');
-    } catch (error) {
-        console.error('Failed to update transaction:', error);
-        showToast('Failed to update transaction', 'error');
-    }
-}
-
-function exportTransactions() {
-    const transactionsToExport = filteredTransactions.length > 0 || hasActiveFilters() ?
-        filteredTransactions : transactions;
-
-    if (transactionsToExport.length === 0) {
-        showToast('No transactions to export', 'error');
-        return;
-    }
-
-    // Create CSV content
-    const headers = ['Date', 'Title', 'Description', 'Category', 'Type', 'Amount'];
-    const csvContent = [
-        headers.join(','),
-        ...transactionsToExport.map(t => [
-            t.date,
-            `"${t.title}"`,
-            `"${t.description}"`,
-            t.category,
-            t.type,
-            t.amount
-        ].join(','))
-    ].join('\n');
-
-    // Create and download file
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transactions_${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    window.URL.revokeObjectURL(url);
-
-    showToast('Transactions exported successfully!', 'success');
-}
-
-// Override the global functions to refresh the transactions table
-const originalAddIncome = window.addIncome;
-const originalAddExpense = window.addExpense;
-const originalDeleteTransaction = window.deleteTransaction;
-
-window.addIncome = function () {
-    originalAddIncome();
-    setTimeout(() => {
-        populateCategoryFilter();
+            applyFilters();
+        } else {
+            console.error('Update failed');
+            alert('Could not update transaction on server.');
+        }
+    } catch (e) {
+        console.error(e);
+        // Fallback for demo mode
+        const idx = window.transactions.findIndex(t => String(t.id) === String(id));
+        if (idx !== -1) {
+            window.transactions[idx] = { ...data, id: id };
+            window.transactions = [...window.transactions];
+        }
+        if (window.hideModal) window.hideModal('editTransactionModal');
         applyFilters();
-    }, 100);
-};
-
-window.addExpense = function () {
-    originalAddExpense();
-    setTimeout(() => {
-        populateCategoryFilter();
-        applyFilters();
-    }, 100);
-};
-
-window.deleteTransaction = async function (id) {
-    try {
-        await store.deleteTransaction(id);
-        populateCategoryFilter();
-        applyFilters();
-        showToast('Transaction deleted successfully!', 'success');
-    } catch (error) {
-        console.error('Failed to delete transaction:', error);
-        showToast('Failed to delete transaction', 'error');
     }
 };
 
-// Helper function to refresh transactions from store
-async function refreshTransactions() {
-    try {
-        await store.loadFromAPI();
-        transactions = store.state.transactions;
-        renderTransactionsTable();
-        populateCategoryFilter();
-    } catch (error) {
-        console.error('Failed to refresh transactions:', error);
-        showToast('Failed to refresh transactions', 'error');
-    }
-}
-
-// Export functions for global access
-window.editTransaction = editTransaction;
-window.updateTransaction = updateTransaction;
-window.exportTransactions = exportTransactions;
-window.changePage = changePage;
+// Global exports
 window.applyFilters = applyFilters;
-window.refreshTransactions = refreshTransactions;
+window.editTransaction = editTransaction;
+window.renderTransactionsTable = renderTransactionsTable;

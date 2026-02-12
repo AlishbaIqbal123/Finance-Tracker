@@ -458,6 +458,11 @@ const CURRENCY_CONFIG = {
     'SGD': { locale: 'en-SG', currency: 'SGD', symbol: 'S$' }
 };
 
+function getCurrentCurrency() {
+    const saved = localStorage.getItem('preferredCurrency');
+    return (saved && CURRENCY_CONFIG[saved]) ? saved : 'PKR';
+}
+
 function formatMoney(amount) {
     const savedCurrency = localStorage.getItem('preferredCurrency') || 'PKR';
     const config = CURRENCY_CONFIG[savedCurrency] || CURRENCY_CONFIG['PKR'];

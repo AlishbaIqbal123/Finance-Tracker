@@ -27,3 +27,13 @@ Route::get('/transactions', [FinanceController::class, 'transactions']);
 Route::get('/settings', [FinanceController::class, 'settings']);
 
 Route::get('/welcome', [FinanceController::class, 'welcome']);
+
+// API routes for transactions (Stateful via Web session)
+Route::middleware('auth')->prefix('api')->group(function () {
+    Route::get('/transactions', [\App\Http\Controllers\Api\TransactionController::class, 'index']);
+    Route::post('/transactions', [\App\Http\Controllers\Api\TransactionController::class, 'store']);
+    Route::get('/transactions/filter', [\App\Http\Controllers\Api\TransactionController::class, 'filter']);
+    Route::get('/transactions/{transaction}', [\App\Http\Controllers\Api\TransactionController::class, 'show']);
+    Route::put('/transactions/{transaction}', [\App\Http\Controllers\Api\TransactionController::class, 'update']);
+    Route::delete('/transactions/{transaction}', [\App\Http\Controllers\Api\TransactionController::class, 'destroy']);
+});

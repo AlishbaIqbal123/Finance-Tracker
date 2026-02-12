@@ -15,8 +15,16 @@
                 <button class="btn btn-theme-toggle rounded-circle p-2 me-2" onclick="toggleTheme()" title="Toggle Theme">
                     <i class="bi bi-moon theme-icon"></i>
                 </button>
-                <a href="{{ route('login') }}" class="nav-link fw-medium d-none d-sm-block me-3 theme-text">Sign In</a>
-                <a class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" href="{{ route('register') }}">Join Now</a>
+                @auth
+                    <a href="{{ url('/dashboard') }}" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">Dashboard</a>
+                    <form method="POST" action="{{ route('logout') }}" class="d-inline">
+                        @csrf
+                        <button type="submit" class="nav-link fw-medium d-none d-sm-block ms-3 theme-text border-0 bg-transparent">Sign Out</button>
+                    </form>
+                @else
+                    <a href="{{ route('login') }}" class="nav-link fw-medium d-none d-sm-block me-3 theme-text">Sign In</a>
+                    <a class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" href="{{ route('register') }}">Join Now</a>
+                @endauth
             </div>
             
             <div class="collapse navbar-collapse justify-content-center d-none d-lg-flex" id="landingNav">
@@ -54,12 +62,21 @@
                         </p>
                         
                         <div class="d-flex flex-column flex-sm-row gap-3 mb-5">
-                            <a href="{{ route('register') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg hover-scale fw-bold">
-                                <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
-                            </a>
-                            <a href="{{ url('/dashboard') }}" class="btn btn-outline-primary btn-lg px-5 py-3 rounded-pill shadow-sm hover-scale fw-medium">
-                                <i class="bi bi-play-circle me-2"></i>Live Demo
-                            </a>
+                            @auth
+                                <a href="{{ url('/dashboard') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg hover-scale fw-bold">
+                                    <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+                                </a>
+                                <a href="{{ url('/transactions') }}" class="btn btn-outline-primary btn-lg px-5 py-3 rounded-pill shadow-sm hover-scale fw-medium">
+                                    <i class="bi bi-receipt me-2"></i>My Transactions
+                                </a>
+                            @else
+                                <a href="{{ route('register') }}" class="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-lg hover-scale fw-bold">
+                                    <i class="bi bi-rocket-takeoff me-2"></i>Get Started Free
+                                </a>
+                                <a href="{{ url('/dashboard') }}" class="btn btn-outline-primary btn-lg px-5 py-3 rounded-pill shadow-sm hover-scale fw-medium">
+                                    <i class="bi bi-play-circle me-2"></i>Live Demo
+                                </a>
+                            @endauth
                         </div>
 
                         <div class="features-list">
